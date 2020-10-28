@@ -11,6 +11,7 @@ const getValue = function() {
      const value1 = await getValue();
      const value2 = await getValue();
      console.log('Value 1 is ' + value1.value + " and value 2 is " + value2.value + ' (with await)');
+    // console.log(`Value 1 is ${valueOneHere}....`) huom backtickit mahdollistaa tuon et stringiin voi syöttää suoraa valuen tuolleen.
  }
 
  async function then(){
