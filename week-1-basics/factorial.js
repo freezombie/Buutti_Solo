@@ -19,3 +19,12 @@ function factorialOf(n)
     }
     return factorial;
 }
+
+/* const factorial = (i) =>  {
+    if(i===0){
+        return;
+    }
+    return i* factorial(i-1)
+}
+
+console.log(factorial(n));*/
