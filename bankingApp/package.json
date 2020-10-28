@@ -1,0 +1,52 @@
+{
+  "name": "bankingapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "eslintConfig": {
+    "extends": "airbnb-base",
+    "env": {
+      "es6": true,
+      "browser": true
+    },
+    "rules": {
+      "indent": [
+        "error",
+        4
+      ],
+      "max-len": [
+        "error",
+        {
+          "code": 100
+        }
+        
+      ],
+      "quotes": [
+        "error",
+        "double"
+      ],
+      "operator-linebreak": [
+        "error",
+        "after"
+      ],
+      "import/extensions": [
+        "warn",
+        "ignorePackages"
+      ],
+      "no-console": ["off"]
+    }
+  },
+  "license": "ISC",
+  "dependencies": {
+    "eslint": "^7.12.1",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.1",
+    "readline-sync": "^1.4.10"
+  }
+}
