@@ -4,12 +4,21 @@ const MAX_ID = 330000000;
 const MIN_ID = 1;
 const USER_NOT_FOUND = "Mhmm, unfortunately an account with that ID does not exist.";
 
+let validatedUser = null;
+
 const all_users = [
     {
         name: "Teuvo Testaaja",
         password: "epäturvallinensalasana",
         id: 1,
         balance: 25,
+        fund_requests: [],
+    },
+    {
+        name: "Tessa Testaaja",
+        password: "turvallinensalasana",
+        id: 2,
+        balance: 500,
         fund_requests: [],
     },
 ];
@@ -94,8 +103,11 @@ function checkAccount()
     }
 }
 
-function withdrawFunds() {
-    console.log("Okay, let's whip up some cash for you from these ones and zeroes");
+function logIn() {
+    if (validatedUser) {
+        console.log("an user is already logged in. Logout first");
+        return;
+    }
     let user = null;
     do {
         const id = readline.question("What is your account ID\n");
@@ -113,47 +125,89 @@ function withdrawFunds() {
             console.log("Ah, there must be a typo. Try typing it again.");
         }
     } while (user.password !== pwd);
-    console.log(`Awesome, we validated you ${user.name}! How much money do you want to withdraw? ` +
-                                                        `(Current balance: ${user.balance}€)`);
+    validatedUser = user;
+}
+
+function logOut() {
+    if (!validatedUser) {
+        console.log("No user is currently logged in");
+    } else {
+        const input = readline.question("Are you sure you want to logout? (yes/no)\n");
+        if (input === "yes" || input === "Yes") {
+            console.log("Logging you out...");
+            validatedUser = null;
+        } else if (input === "no" || input === "No") {
+            console.log("You are still logged in as you wished for.");
+        } else {
+            console.log("Invalid input. Type logout again if needed");
+        }
+    }
+}
+
+function withdrawFunds() {
+    console.log("Okay, let's whip up some cash for you from these ones and zeroes");
+    if (!validatedUser) {
+        logIn();
+    }
+    console.log(`Awesome, we validated you ${validatedUser.name}! ` +
+                `How much money do you want to withdraw? ` +
+                `(Current balance: ${validatedUser.balance}€)`);
     let withdrawAmount = 0;
     do {
         withdrawAmount = readline.question();
-        if (withdrawAmount > user.balance) {
+        if (withdrawAmount > validatedUser.balance) {
             console.log("Unfortunately you don't have the balance for that. " +
                         "Let's try a smaller amount");
         }
-    } while (withdrawAmount > user.balance);
-    user.balance -= withdrawAmount;
+    } while (withdrawAmount > validatedUser.balance);
+    validatedUser.balance -= withdrawAmount;
     console.log(`Awesome, you can now enjoy your ${withdrawAmount}€ in cash! ` +
-                `There's still ${user.balance}€ in your account, safe with us.`);
+                `There's still ${validatedUser.balance}€ in your account, safe with us.`);
 }
 
 function depositFunds() {
-    // tässä ja withdraw fundsissa on samoja osioita, joten voisi tehdä funktiot.
     console.log("Okay, let's convert your cash in to some delicious ones and zeroes.");
-    let user = null;
+    if (!validatedUser) {
+        logIn();
+    }
+    console.log(`Awesome, we validated you ${validatedUser.name}! ` +
+                `How much money do you want to deposit? ` +
+                `(Current balance: ${validatedUser.balance}€)`);
+    const depositAmount = parseInt(readline.question(), 10); // tarkista onko numero.
+    validatedUser.balance += depositAmount;
+    console.log(`Awesome, we removed ${depositAmount}€ from existence and stored them into our ` +
+                `system. Now your account's balance is ${validatedUser.balance}€`);
+}
+
+function transferFunds() {
+    console.log("Okay, let's slide these binary treats into someone else's pockets");
+    if (!validatedUser) {
+        logIn();
+    }
+    console.log(`Awesome, we validated you ${validatedUser.name}! ` +
+                `How much money do you want to transfer? ` +
+                `(Current balance: ${validatedUser.balance}€)`);
+    let transferAmount = 0;
     do {
-        const id = readline.question("What is your account ID\n");
-        user = all_users.find((obj) => obj.id === parseInt(id, 10));
-        if (!user) {
+        transferAmount = parseInt(readline.question(), 10);
+        if (transferAmount > validatedUser.balance) {
+            console.log("Unfortunately you don't have the balance for that. " +
+                        "Let's try a smaller amount");
+        }
+    } while (transferAmount > validatedUser.balance);
+    console.log("Awesome, we can do that. What is the ID of the account " +
+                "you want to transfer these funds into?");
+    let targetUser = null;
+    do {
+        const id = readline.question();
+        targetUser = all_users.find((obj) => obj.id === parseInt(id, 10));
+        if (!targetUser) {
             console.log(`${USER_NOT_FOUND} Try again!`);
         }
-    } while (!user);
-    console.log("Okay, we found an account with that ID. " +
-    "You will need to insert your password so we can validate it's actually you");
-    let pwd;
-    do {
-        pwd = readline.question();
-        if (user.password !== pwd) {
-            console.log("Ah, there must be a typo. Try typing it again.");
-        }
-    } while (user.password !== pwd);
-    console.log(`Awesome, we validated you ${user.name}! How much money do you want to deposit? ` +
-                                                        `(Current balance: ${user.balance}€)`);
-    const depositAmount = parseInt(readline.question(), 10); // tarkista onko numero.
-    user.balance += depositAmount;
-    console.log(`Awesome, we removed ${depositAmount}€ from existence and stored them into our ` +
-                `system. Now your account's balance is ${user.balance}€`);
+    } while (!targetUser);
+    validatedUser.balance -= transferAmount;
+    targetUser.balance += transferAmount;
+    console.log(`Awesome. We sent ${transferAmount} to an account with the ID of ${targetUser.id}`);
 }
 
 const cmds = {
@@ -162,6 +216,9 @@ const cmds = {
     does_account_exist: checkAccount,
     withdraw_funds: withdrawFunds,
     deposit_funds: depositFunds,
+    transfer_funds: transferFunds,
+    log_in: logIn,
+    logout: logOut,
 };
 
 console.log("Welcome to Pankkibank banking CLI");
