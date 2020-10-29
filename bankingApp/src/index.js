@@ -1,5 +1,9 @@
 import readline from "readline-sync";
 
+const MAX_ID = 330000000;
+const MIN_ID = 1;
+const USER_NOT_FOUND = "Mhmm, unfortunately an account with that ID does not exist.";
+
 const all_users = [
     {
         name: "Teuvo Testaaja",
@@ -8,7 +12,7 @@ const all_users = [
         balance: 25,
         fund_requests: [],
     },
-]; // en oo varma toimiiko ylläoleva.
+];
 
 function printHelp() {
     console.log("\nI’m glad to help you :) Here’s a list of commands you can use! \n \n" +
@@ -30,7 +34,22 @@ function printHelp() {
 }
 
 const createId = function createId() {
-    return 2;
+    // harkitsin käyttäväni window.crypto.getRandomValues() tämän sijaan koska randomia
+    // ei saisi käyttää mihinkää mikä liittyy turvallisuuteen.
+    // ajattelin kumminkin ettei ID nyt välttämättä tarvi olla turvallisesti generoitu
+    // **
+    // Niin kauan kun löydetään user, kokeillaan uudella IDllä. Toki kun id määrä ylittää tietyn
+    // rajan niin tämähän muuttuu epäkäytännölliseksi, silloin varmaan pitäisi olla tallessa jossain
+    // idt mitä ei vielä käytetä.
+    let returnedId = 0; // näemmä loopissa pyörivät arvot ei saa olla ulkopuolisia, tarvi 2 var.
+    do {
+        const randomId = Math.floor(Math.random() * (MAX_ID - MIN_ID + 1) + MIN_ID);
+        const possibleUser = all_users.find((obj) => obj.id === parseInt(randomId, 10));
+        if (typeof possibleUser === "undefined") {
+            returnedId = randomId;
+        }
+    } while (typeof possibleUser !== "undefined"); // vissii parempi ois vaan (true) ja breakata.
+    return returnedId;
 };
 
 function createAccount() {
@@ -70,15 +89,79 @@ function checkAccount()
         "You should confirm with the owner that this account is actually his.");
         console.log(user);
     } else {
-        console.log("Mhmm, unfortunately an account with that ID does not exist.");
+        console.log(USER_NOT_FOUND);
         console.log(user);
     }
+}
+
+function withdrawFunds() {
+    console.log("Okay, let's whip up some cash for you from these ones and zeroes");
+    let user = null;
+    do {
+        const id = readline.question("What is your account ID\n");
+        user = all_users.find((obj) => obj.id === parseInt(id, 10));
+        if (!user) {
+            console.log(`${USER_NOT_FOUND} Try again!`);
+        }
+    } while (!user);
+    console.log("Okay, we found an account with that ID. " +
+    "You will need to insert your password so we can validate it's actually you");
+    let pwd;
+    do {
+        pwd = readline.question();
+        if (user.password !== pwd) {
+            console.log("Ah, there must be a typo. Try typing it again.");
+        }
+    } while (user.password !== pwd);
+    console.log(`Awesome, we validated you ${user.name}! How much money do you want to withdraw? ` +
+                                                        `(Current balance: ${user.balance}€)`);
+    let withdrawAmount = 0;
+    do {
+        withdrawAmount = readline.question();
+        if (withdrawAmount > user.balance) {
+            console.log("Unfortunately you don't have the balance for that. " +
+                        "Let's try a smaller amount");
+        }
+    } while (withdrawAmount > user.balance);
+    user.balance -= withdrawAmount;
+    console.log(`Awesome, you can now enjoy your ${withdrawAmount}€ in cash! ` +
+                `There's still ${user.balance}€ in your account, safe with us.`);
+}
+
+function depositFunds() {
+    // tässä ja withdraw fundsissa on samoja osioita, joten voisi tehdä funktiot.
+    console.log("Okay, let's convert your cash in to some delicious ones and zeroes.");
+    let user = null;
+    do {
+        const id = readline.question("What is your account ID\n");
+        user = all_users.find((obj) => obj.id === parseInt(id, 10));
+        if (!user) {
+            console.log(`${USER_NOT_FOUND} Try again!`);
+        }
+    } while (!user);
+    console.log("Okay, we found an account with that ID. " +
+    "You will need to insert your password so we can validate it's actually you");
+    let pwd;
+    do {
+        pwd = readline.question();
+        if (user.password !== pwd) {
+            console.log("Ah, there must be a typo. Try typing it again.");
+        }
+    } while (user.password !== pwd);
+    console.log(`Awesome, we validated you ${user.name}! How much money do you want to deposit? ` +
+                                                        `(Current balance: ${user.balance}€)`);
+    const depositAmount = parseInt(readline.question(), 10); // tarkista onko numero.
+    user.balance += depositAmount;
+    console.log(`Awesome, we removed ${depositAmount}€ from existence and stored them into our ` +
+                `system. Now your account's balance is ${user.balance}€`);
 }
 
 const cmds = {
     help: printHelp,
     create_account: createAccount,
     does_account_exist: checkAccount,
+    withdraw_funds: withdrawFunds,
+    deposit_funds: depositFunds,
 };
 
 console.log("Welcome to Pankkibank banking CLI");
