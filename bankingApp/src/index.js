@@ -210,6 +210,90 @@ function transferFunds() {
     console.log(`Awesome. We sent ${transferAmount} to an account with the ID of ${targetUser.id}`);
 }
 
+function requestFunds() {
+    if (!validatedUser)
+    {
+        logIn();
+    }
+    console.log("So you want to request funds from someone? Give us their ID.");
+    // alla oleva on sama kuin transerFundsin lopussa joten tästä voipi tehä funktion.
+    let targetUser = null;
+    do {
+        const id = readline.question();
+        targetUser = all_users.find((obj) => obj.id === parseInt(id, 10));
+        if (!targetUser) {
+            console.log(`${USER_NOT_FOUND} Try again!`);
+        }
+    } while (!targetUser);
+    console.log("Okay, we found an account with that ID. How much money do you want to request?");
+    const requestedAmount = parseInt(readline.question(), 10); // tarkista onko numero.
+    console.log(`Awesome! We'll request that amount from the user with ID ${targetUser.id}`);
+    const request = {
+        forId: validatedUser.id,
+        amount: requestedAmount,
+    };
+    targetUser.fund_requests = [...targetUser.fund_requests, request];
+}
+
+function printFundRequests() {
+    if (!validatedUser) {
+        logIn();
+    }
+    console.log("Here's all the requests are out for your funds:");
+    if (validatedUser.fund_requests.length === 0) {
+        console.log("There are no requests for your funds.");
+    } else {
+        validatedUser.fund_requests.forEach((request) => {
+            console.log(`${request.amount}€ for user ID ${request.forId}`);
+        });
+    }
+}
+
+function acceptFundRequests() {
+    if (!validatedUser) {
+        logIn();
+    }
+    if (validatedUser.fund_requests.length === 0) {
+        console.log("There are no requests for your funds.");
+        return;
+    }
+    console.log("So you want to accept someones fund request? Give us their ID");
+    // alemmasta voi vieläkin tehä funktion.
+    let targetRequest = null;
+    do {
+        const id = readline.question();
+        targetRequest = validatedUser.fund_requests.find((obj) => obj.forId === parseInt(id, 10));
+        if (!targetRequest) {
+            console.log("There's no request for your funds from that account ID. Try again?");
+        }
+    } while (!targetRequest);
+    console.log(`Okay, we found a request for your funds for ${targetRequest.amount}€.` +
+                " Accept request? (yes/no)"); // näemmä yes/nostakin voi tehä funktion.
+    let validInput = false;
+    do {
+        const input = readline.question();
+        if (input === "yes" || input === "Yes") {
+            validInput = true;
+            if (validatedUser.balance < targetRequest.amount) {
+                console.log("Unfortunately you don't have the balance for this kind of amount");
+            } else {
+                validatedUser.balance -= targetRequest.amount;
+                const targetUser = all_users.find((user) => user.id === targetRequest.forId);
+                targetUser.balance += targetRequest.amount;
+                validatedUser.fund_requests = validatedUser.fund_requests.filter((request) => request !== targetRequest);
+                console.log("Good! Now these funds have been transferred " +
+                `to the account with ID ${targetRequest.forId}`);
+            }
+        } else if (input === "no" || input === "No") {
+            console.log("You did not accept the request, " +
+            "therefore no funds have been transferred.");
+            validInput = true;
+        } else {
+            console.log("Invalid input. Try again!");
+        }
+    } while (!validInput);
+}
+
 const cmds = {
     help: printHelp,
     create_account: createAccount,
@@ -219,6 +303,9 @@ const cmds = {
     transfer_funds: transferFunds,
     log_in: logIn,
     logout: logOut,
+    request_funds: requestFunds,
+    funds_requests: printFundRequests,
+    accept_fund_request: acceptFundRequests,
 };
 
 console.log("Welcome to Pankkibank banking CLI");
@@ -228,5 +315,7 @@ while (true) {
         break;
     } else if (input in cmds) {
         cmds[input]();
+    } else {
+        console.log("Invalid input. Try typing 'help'");
     }
 }
