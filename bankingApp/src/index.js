@@ -52,13 +52,14 @@ const createId = function createId() {
     // rajan niin tämähän muuttuu epäkäytännölliseksi, silloin varmaan pitäisi olla tallessa jossain
     // idt mitä ei vielä käytetä.
     let returnedId = 0; // näemmä loopissa pyörivät arvot ei saa olla ulkopuolisia, tarvi 2 var.
+    let possibleUser = null;
     do {
         const randomId = Math.floor(Math.random() * (MAX_ID - MIN_ID + 1) + MIN_ID);
-        const possibleUser = all_users.find((obj) => obj.id === parseInt(randomId, 10));
-        if (typeof possibleUser === "undefined") {
+        possibleUser = all_users.find((obj) => obj.id === parseInt(randomId, 10));
+        if (!possibleUser) {
             returnedId = randomId;
         }
-    } while (typeof possibleUser !== "undefined"); // vissii parempi ois vaan (true) ja breakata.
+    } while (possibleUser); // vissii parempi ois vaan (true) ja breakata.
     return returnedId;
 };
 
@@ -89,6 +90,7 @@ function logIn() {
 
 function createAccount() {
     console.log("So you want to create a new account!");
+    // tähän nimi hommaan sama ku modifyssä. voi tehä funktion.
     const name = readline.question("Let's start with the easy question. What is your name?\n");
     console.log(`Hey ${name}! It's great to have you as a client.`);
     let balance = readline.question("How much cash do you want to deposit to get " +
@@ -109,7 +111,7 @@ function createAccount() {
     account.id = id;
     account.balance = balance;
     account.fund_requests = [];
-    all_users[all_users.length] = account;
+    all_users = [...all_users, account];
 }
 
 function checkAccount() {
@@ -339,7 +341,7 @@ const cmds = {
 
 if (!fs.existsSync("savedData.JSON")) {
     console.log("... data does not exist, creating it now ...");
-    fs.writeFile("savedData.JSON", JSON.stringify(all_users), (error) => {
+    fs.writeFileSync("savedData.JSON", JSON.stringify(all_users), (error) => {
         if (error) {
             console.log("... Failed while trying to write to file ...");
         } else {
