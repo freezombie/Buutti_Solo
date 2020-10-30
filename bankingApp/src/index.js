@@ -6,7 +6,7 @@ const MIN_ID = 1;
 const USER_NOT_FOUND = "Mhmm, unfortunately an account with that ID does not exist.";
 
 let validatedUser = null;
-// all_users ei ole camelcasessä niinkö eslint haluaa, koska ei se ollut tehtävänannossakaan.
+
 let all_users = [
     {
         name: "Teuvo Testaaja",
@@ -44,13 +44,6 @@ function printHelp() {
 }
 
 const createId = function createId() {
-    // harkitsin käyttäväni window.crypto.getRandomValues() tämän sijaan koska randomia
-    // ei saisi käyttää mihinkää mikä liittyy turvallisuuteen.
-    // ajattelin kumminkin ettei ID nyt välttämättä tarvi olla turvallisesti generoitu
-    // **
-    // Niin kauan kun löydetään user, kokeillaan uudella IDllä. Toki kun id määrä ylittää tietyn
-    // rajan niin tämähän muuttuu epäkäytännölliseksi, silloin varmaan pitäisi olla tallessa jossain
-    // idt mitä ei vielä käytetä.
     let returnedId = 0;
     let possibleUser = null;
     do {
@@ -122,11 +115,21 @@ function createAccount() {
     account.fund_requests = [];
     all_users = [...all_users, account];
 }
+const getNumberInput = function getNumberInput() {
+    let supposedNumber = null;
+    do {
+        supposedNumber = readline.question();
+        if (Number.isNaN(supposedNumber)) {
+            console.log("Please insert a number");
+        }
+    }while(Number.isNaN(supposedNumber));
+    return supposedNumber;
+};
 
 function checkAccount() {
-    const input = readline.question("Mhmm, you want to check if an account with an ID exists. " +
-                                    "Let’s do it! Give us the ID and we’ll check.\n");
-    // tässä vois tsekata onko numero.
+    console.log("Mhmm, you want to check if an account with an ID exists. " +
+                "Let’s do it! Give us the ID and we’ll check.\n");
+    const input = getNumberInput();
     const user = all_users.find((obj) => obj.id === parseInt(input, 10));
     console.log(all_users);
     if (user) {
@@ -203,7 +206,7 @@ function depositFunds() {
     console.log(`Awesome, we validated you ${validatedUser.name}! ` +
                 "How much money do you want to deposit? " +
                 `(Current balance: ${validatedUser.balance}€)`);
-    const depositAmount = parseInt(readline.question(), 10); // tarkista onko numero.
+    const depositAmount = parseInt(getNumberInput(), 10);
     validatedUser.balance += depositAmount;
     console.log(`Awesome, we removed ${depositAmount}€ from existence and stored them into our ` +
                 `system. Now your account's balance is ${validatedUser.balance}€`);
@@ -252,7 +255,7 @@ function requestFunds() {
     console.log("So you want to request funds from someone? Give us their ID.");
     const targetUser = findTargetUser();
     console.log("Okay, we found an account with that ID. How much money do you want to request?");
-    const requestedAmount = parseInt(readline.question(), 10); // tarkista onko numero.
+    const requestedAmount = parseInt(getNumberInput(), 10);
     console.log(`Awesome! We'll request that amount from the user with ID ${targetUser.id}`);
     const request = {
         forId: validatedUser.id,
@@ -284,7 +287,6 @@ function acceptFundRequests() {
         return;
     }
     console.log("So you want to accept someones fund request? Give us their ID");
-    // alemmasta voi vieläkin tehä funktion.
     let targetRequest = null;
     do {
         const id = readline.question();
@@ -294,7 +296,7 @@ function acceptFundRequests() {
         }
     } while (!targetRequest);
     console.log(`Okay, we found a request for your funds for ${targetRequest.amount}€.` +
-                " Accept request? (yes/no)"); // näemmä yes/nostakin voi tehä funktion.
+                " Accept request? (yes/no)");
     let validInput = false;
     do {
         const input = readline.question();
