@@ -209,6 +209,18 @@ function depositFunds() {
                 `system. Now your account's balance is ${validatedUser.balance}€`);
 }
 
+const findTargetUser = function findTargetUser() {
+    let possibleUser = null;
+    do {
+        const id = readline.question();
+        possibleUser = all_users.find((obj) => obj.id === parseInt(id, 10));
+        if (!possibleUser) {
+            console.log(`${USER_NOT_FOUND} Try again!`);
+        }
+    } while (!possibleUser);
+    return possibleUser;
+}
+
 function transferFunds() {
     console.log("Okay, let's slide these binary treats into someone else's pockets");
     if (!validatedUser) {
@@ -227,14 +239,7 @@ function transferFunds() {
     } while (transferAmount > validatedUser.balance);
     console.log("Awesome, we can do that. What is the ID of the account " +
                 "you want to transfer these funds into?");
-    let targetUser = null;
-    do {
-        const id = readline.question();
-        targetUser = all_users.find((obj) => obj.id === parseInt(id, 10));
-        if (!targetUser) {
-            console.log(`${USER_NOT_FOUND} Try again!`);
-        }
-    } while (!targetUser);
+    const targetUser = findTargetUser();
     validatedUser.balance -= transferAmount;
     targetUser.balance += transferAmount;
     console.log(`Awesome. We sent ${transferAmount} to an account with the ID of ${targetUser.id}`);
@@ -245,15 +250,7 @@ function requestFunds() {
         logIn();
     }
     console.log("So you want to request funds from someone? Give us their ID.");
-    // alla oleva on sama kuin transerFundsin lopussa joten tästä voipi tehä funktion.
-    let targetUser = null;
-    do {
-        const id = readline.question();
-        targetUser = all_users.find((obj) => obj.id === parseInt(id, 10));
-        if (!targetUser) {
-            console.log(`${USER_NOT_FOUND} Try again!`);
-        }
-    } while (!targetUser);
+    const targetUser = findTargetUser();
     console.log("Okay, we found an account with that ID. How much money do you want to request?");
     const requestedAmount = parseInt(readline.question(), 10); // tarkista onko numero.
     console.log(`Awesome! We'll request that amount from the user with ID ${targetUser.id}`);
