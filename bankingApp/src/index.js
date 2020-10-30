@@ -1,4 +1,5 @@
 import readline from "readline-sync";
+import fs from "fs";
 
 const MAX_ID = 330000000;
 const MIN_ID = 1;
@@ -6,7 +7,7 @@ const USER_NOT_FOUND = "Mhmm, unfortunately an account with that ID does not exi
 
 let validatedUser = null;
 // all_users ei ole camelcasessä niinkö eslint haluaa, koska ei se ollut tehtävänannossakaan.
-const all_users = [
+let all_users = [
     {
         name: "Teuvo Testaaja",
         password: "epäturvallinensalasana",
@@ -338,10 +339,25 @@ const cmds = {
     accept_fund_request: acceptFundRequests,
 };
 
+if (!fs.existsSync("savedData.JSON")) {
+    console.log("... data does not exist, creating it now ...");
+    fs.writeFile("savedData.JSON", JSON.stringify(all_users), (error) => {
+        if (error) {
+            console.log("... Failed while trying to write to file ...");
+        } else {
+            console.log("... Data saved into a file ...");
+        }
+    });
+} else {
+    all_users = JSON.parse(fs.readFileSync("savedData.JSON"));
+}
+
 console.log("Welcome to Pankkibank banking CLI");
 while (true) {
     const input = readline.question("");
     if (input === "exit") {
+        console.log(".. Exiting the program and saving data ...");
+        fs.writeFileSync("savedData.JSON", JSON.stringify(all_users));
         break;
     } else if (input in cmds) {
         cmds[input]();
