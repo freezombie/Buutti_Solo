@@ -26,7 +26,7 @@ let all_users = [
 
 function printHelp() {
     console.log("\nI’m glad to help you :) Here’s a list of commands you can use! \n \n" +
-"Accounts \n" + 
+"Accounts \n" +
 "create_account -- > Opens dialog for creating an account. \n" +
 "close_account -- > Opens a dialog for closing an account. \n" +
 "modify_account -- > Opens a dialog for modifying an account. \n" +
@@ -37,7 +37,7 @@ function printHelp() {
 "withdraw_funds -- > Opens a dialog for withdrawing funds. \n" +
 "deposit_funds -- > Opens a dialog for depositing funds. \n" +
 "transfer_funds -- > Opens a dialog for transferring funds to another account. \n \n" +
-"Requests \n\ " +
+"Requests \n" +
 "request_funds -- > Opens a dialog for requesting another user for funds. \n" +
 "funds_requests -- > Shows all the requests for the account funds. \n" +
 "accept_fund_request -- > Opens a dialog for accepting a fund request. \n");
@@ -112,8 +112,7 @@ function createAccount() {
     all_users[all_users.length] = account;
 }
 
-function checkAccount()
-{
+function checkAccount() {
     const input = readline.question("Mhmm, you want to check if an account with an ID exists. " +
                                     "Let’s do it! Give us the ID and we’ll check.\n");
     // tässä vois tsekata onko numero.
@@ -139,7 +138,7 @@ function modifyAccount() {
     let newName = validatedUser.name;
     do {
         newName = readline.question();
-        let splitName = newName.split(" ");
+        const splitName = newName.split(" ");
         let concattedName = "";
         newName = "";
         splitName.forEach((name) => {
@@ -179,7 +178,7 @@ function withdrawFunds() {
         logIn();
     }
     console.log(`Awesome, we validated you ${validatedUser.name}! ` +
-                `How much money do you want to withdraw? ` +
+                "How much money do you want to withdraw? " +
                 `(Current balance: ${validatedUser.balance}€)`);
     let withdrawAmount = 0;
     do {
@@ -200,7 +199,7 @@ function depositFunds() {
         logIn();
     }
     console.log(`Awesome, we validated you ${validatedUser.name}! ` +
-                `How much money do you want to deposit? ` +
+                "How much money do you want to deposit? " +
                 `(Current balance: ${validatedUser.balance}€)`);
     const depositAmount = parseInt(readline.question(), 10); // tarkista onko numero.
     validatedUser.balance += depositAmount;
@@ -214,7 +213,7 @@ function transferFunds() {
         logIn();
     }
     console.log(`Awesome, we validated you ${validatedUser.name}! ` +
-                `How much money do you want to transfer? ` +
+                "How much money do you want to transfer? " +
                 `(Current balance: ${validatedUser.balance}€)`);
     let transferAmount = 0;
     do {
@@ -240,8 +239,7 @@ function transferFunds() {
 }
 
 function requestFunds() {
-    if (!validatedUser)
-    {
+    if (!validatedUser) {
         logIn();
     }
     console.log("So you want to request funds from someone? Give us their ID.");
@@ -352,13 +350,14 @@ if (!fs.existsSync("savedData.JSON")) {
     all_users = JSON.parse(fs.readFileSync("savedData.JSON"));
 }
 
+let running = true;
 console.log("Welcome to Pankkibank banking CLI");
-while (true) {
+while (running) {
     const input = readline.question("");
     if (input === "exit") {
         console.log(".. Exiting the program and saving data ...");
         fs.writeFileSync("savedData.JSON", JSON.stringify(all_users));
-        break;
+        running = false;
     } else if (input in cmds) {
         cmds[input]();
     } else {
