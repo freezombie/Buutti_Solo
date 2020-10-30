@@ -5,7 +5,7 @@ const MIN_ID = 1;
 const USER_NOT_FOUND = "Mhmm, unfortunately an account with that ID does not exist.";
 
 let validatedUser = null;
-
+// all_users ei ole camelcasessä niinkö eslint haluaa, koska ei se ollut tehtävänannossakaan.
 const all_users = [
     {
         name: "Teuvo Testaaja",
@@ -61,6 +61,31 @@ const createId = function createId() {
     return returnedId;
 };
 
+function logIn() {
+    if (validatedUser) {
+        console.log("an user is already logged in. Logout first");
+        return;
+    }
+    let user = null;
+    do {
+        const id = readline.question("What is your account ID\n");
+        user = all_users.find((obj) => obj.id === parseInt(id, 10));
+        if (!user) {
+            console.log(`${USER_NOT_FOUND} Try again!`);
+        }
+    } while (!user);
+    console.log("Okay, we found an account with that ID. " +
+    "You will need to insert your password so we can validate it's actually you");
+    let pwd;
+    do {
+        pwd = readline.question();
+        if (user.password !== pwd) {
+            console.log("Ah, there must be a typo. Try typing it again.");
+        }
+    } while (user.password !== pwd);
+    validatedUser = user;
+}
+
 function createAccount() {
     console.log("So you want to create a new account!");
     const name = readline.question("Let's start with the easy question. What is your name?\n");
@@ -103,29 +128,32 @@ function checkAccount()
     }
 }
 
-function logIn() {
-    if (validatedUser) {
-        console.log("an user is already logged in. Logout first");
-        return;
+function modifyAccount() {
+    console.log("You want to modify an accounts stored holder name? We can definitely do that!");
+    if (!validatedUser) {
+        logIn();
     }
-    let user = null;
+    console.log(`Awesome, we validated you ${validatedUser.name}! ` +
+                "What is the new name for the account holder?");
+    let newName = validatedUser.name;
     do {
-        const id = readline.question("What is your account ID\n");
-        user = all_users.find((obj) => obj.id === parseInt(id, 10));
-        if (!user) {
-            console.log(`${USER_NOT_FOUND} Try again!`);
+        newName = readline.question();
+        let splitName = newName.split(" ");
+        let concattedName = "";
+        newName = "";
+        splitName.forEach((name) => {
+            // newName += (name.charAt(0).toUpperCase() + name.slice(1)).concat(" ");
+            const capitalizedFirstLetter = name.charAt(0).toUpperCase();
+            concattedName += `${capitalizedFirstLetter}${name.slice(1)} `;
+        });
+        newName = concattedName.trim();
+        if (newName === validatedUser.name) {
+            console.log("I'm quite sure that's the same name. Try again!");
         }
-    } while (!user);
-    console.log("Okay, we found an account with that ID. " +
-    "You will need to insert your password so we can validate it's actually you");
-    let pwd;
-    do {
-        pwd = readline.question();
-        if (user.password !== pwd) {
-            console.log("Ah, there must be a typo. Try typing it again.");
-        }
-    } while (user.password !== pwd);
-    validatedUser = user;
+    } while (newName === validatedUser.name);
+    console.log(`There we go! We will address you as ${newName} from now on`);
+    const userToChange = all_users.find((obj) => obj.id === parseInt(validatedUser.id, 10));
+    userToChange.name = newName;
 }
 
 function logOut() {
@@ -280,7 +308,8 @@ function acceptFundRequests() {
                 validatedUser.balance -= targetRequest.amount;
                 const targetUser = all_users.find((user) => user.id === targetRequest.forId);
                 targetUser.balance += targetRequest.amount;
-                validatedUser.fund_requests = validatedUser.fund_requests.filter((request) => request !== targetRequest);
+                validatedUser.fund_requests =
+                validatedUser.fund_requests.filter((request) => request !== targetRequest);
                 console.log("Good! Now these funds have been transferred " +
                 `to the account with ID ${targetRequest.forId}`);
             }
@@ -298,6 +327,7 @@ const cmds = {
     help: printHelp,
     create_account: createAccount,
     does_account_exist: checkAccount,
+    modify_account: modifyAccount,
     withdraw_funds: withdrawFunds,
     deposit_funds: depositFunds,
     transfer_funds: transferFunds,
