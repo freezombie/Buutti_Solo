@@ -51,7 +51,7 @@ const createId = function createId() {
     // Niin kauan kun löydetään user, kokeillaan uudella IDllä. Toki kun id määrä ylittää tietyn
     // rajan niin tämähän muuttuu epäkäytännölliseksi, silloin varmaan pitäisi olla tallessa jossain
     // idt mitä ei vielä käytetä.
-    let returnedId = 0; // näemmä loopissa pyörivät arvot ei saa olla ulkopuolisia, tarvi 2 var.
+    let returnedId = 0;
     let possibleUser = null;
     do {
         const randomId = Math.floor(Math.random() * (MAX_ID - MIN_ID + 1) + MIN_ID);
@@ -59,7 +59,7 @@ const createId = function createId() {
         if (!possibleUser) {
             returnedId = randomId;
         }
-    } while (possibleUser); // vissii parempi ois vaan (true) ja breakata.
+    } while (possibleUser);
     return returnedId;
 };
 
@@ -88,10 +88,19 @@ function logIn() {
     validatedUser = user;
 }
 
+const standardizeName = function standardizeName(name) {
+    const splitName = name.split(" ");
+    let concattedName = "";
+    splitName.forEach((namePart) => {
+        concattedName += (namePart.charAt(0).toUpperCase() + namePart.slice(1)).concat(" ");
+    });
+    return concattedName.trim();
+};
+
 function createAccount() {
     console.log("So you want to create a new account!");
-    // tähän nimi hommaan sama ku modifyssä. voi tehä funktion.
-    const name = readline.question("Let's start with the easy question. What is your name?\n");
+    console.log("Let's start with the easy question. What is your name?\n");
+    const name = standardizeName(readline.question());
     console.log(`Hey ${name}! It's great to have you as a client.`);
     let balance = readline.question("How much cash do you want to deposit to get " +
                                      "started with your account? (10€ is the minimum)\n");
@@ -120,7 +129,7 @@ function checkAccount() {
     // tässä vois tsekata onko numero.
     const user = all_users.find((obj) => obj.id === parseInt(input, 10));
     console.log(all_users);
-    if (typeof user !== "undefined") {
+    if (user) {
         console.log("Awesome! This account actually exists. " +
         "You should confirm with the owner that this account is actually his.");
         console.log(user);
@@ -139,16 +148,7 @@ function modifyAccount() {
                 "What is the new name for the account holder?");
     let newName = validatedUser.name;
     do {
-        newName = readline.question();
-        const splitName = newName.split(" ");
-        let concattedName = "";
-        newName = "";
-        splitName.forEach((name) => {
-            // newName += (name.charAt(0).toUpperCase() + name.slice(1)).concat(" ");
-            const capitalizedFirstLetter = name.charAt(0).toUpperCase();
-            concattedName += `${capitalizedFirstLetter}${name.slice(1)} `;
-        });
-        newName = concattedName.trim();
+        newName = standardizeName(readline.question());
         if (newName === validatedUser.name) {
             console.log("I'm quite sure that's the same name. Try again!");
         }
@@ -163,10 +163,10 @@ function logOut() {
         console.log("No user is currently logged in");
     } else {
         const input = readline.question("Are you sure you want to logout? (yes/no)\n");
-        if (input === "yes" || input === "Yes") {
+        if (input.toLowerCase() === "yes") {
             console.log("Logging you out...");
             validatedUser = null;
-        } else if (input === "no" || input === "No") {
+        } else if (input.toLowerCase() === "no") {
             console.log("You are still logged in as you wished for.");
         } else {
             console.log("Invalid input. Type logout again if needed");
@@ -301,7 +301,7 @@ function acceptFundRequests() {
     let validInput = false;
     do {
         const input = readline.question();
-        if (input === "yes" || input === "Yes") {
+        if (input.toLowerCase() === "yes") {
             validInput = true;
             if (validatedUser.balance < targetRequest.amount) {
                 console.log("Unfortunately you don't have the balance for this kind of amount");
@@ -314,7 +314,7 @@ function acceptFundRequests() {
                 console.log("Good! Now these funds have been transferred " +
                 `to the account with ID ${targetRequest.forId}`);
             }
-        } else if (input === "no" || input === "No") {
+        } else if (input.toLowerCase() === "no") {
             console.log("You did not accept the request, " +
             "therefore no funds have been transferred.");
             validInput = true;
