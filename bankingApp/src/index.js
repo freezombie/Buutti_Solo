@@ -79,6 +79,7 @@ function logIn() {
         }
     } while (user.password !== pwd);
     validatedUser = user;
+    console.log(`Awesome, we validated you ${validatedUser.name}!`);
 }
 
 const standardizeName = function standardizeName(name) {
@@ -114,6 +115,7 @@ function createAccount() {
     account.balance = balance;
     account.fund_requests = [];
     all_users = [...all_users, account];
+    console.log("Your account has now been created and you have been returned to the main menu");
 }
 const getNumberInput = function getNumberInput() {
     let supposedNumber = null;
@@ -122,7 +124,7 @@ const getNumberInput = function getNumberInput() {
         if (Number.isNaN(supposedNumber)) {
             console.log("Please insert a number");
         }
-    }while(Number.isNaN(supposedNumber));
+    } while (Number.isNaN(supposedNumber));
     return supposedNumber;
 };
 
@@ -147,8 +149,7 @@ function modifyAccount() {
     if (!validatedUser) {
         logIn();
     }
-    console.log(`Awesome, we validated you ${validatedUser.name}! ` +
-                "What is the new name for the account holder?");
+    console.log("What is the new name for the account holder?");
     let newName = validatedUser.name;
     do {
         newName = standardizeName(readline.question());
@@ -182,8 +183,7 @@ function withdrawFunds() {
     if (!validatedUser) {
         logIn();
     }
-    console.log(`Awesome, we validated you ${validatedUser.name}! ` +
-                "How much money do you want to withdraw? " +
+    console.log("How much money do you want to withdraw? " +
                 `(Current balance: ${validatedUser.balance}€)`);
     let withdrawAmount = 0;
     do {
@@ -203,8 +203,7 @@ function depositFunds() {
     if (!validatedUser) {
         logIn();
     }
-    console.log(`Awesome, we validated you ${validatedUser.name}! ` +
-                "How much money do you want to deposit? " +
+    console.log("How much money do you want to deposit? " +
                 `(Current balance: ${validatedUser.balance}€)`);
     const depositAmount = parseInt(getNumberInput(), 10);
     validatedUser.balance += depositAmount;
@@ -222,15 +221,14 @@ const findTargetUser = function findTargetUser() {
         }
     } while (!possibleUser);
     return possibleUser;
-}
+};
 
 function transferFunds() {
     console.log("Okay, let's slide these binary treats into someone else's pockets");
     if (!validatedUser) {
         logIn();
     }
-    console.log(`Awesome, we validated you ${validatedUser.name}! ` +
-                "How much money do you want to transfer? " +
+    console.log("How much money do you want to transfer? " +
                 `(Current balance: ${validatedUser.balance}€)`);
     let transferAmount = 0;
     do {
