@@ -42,6 +42,20 @@ const standardizeName = function standardizeName(name) {
     return concattedName.trim();
 };
 
+const validateUser = function validateUser(req, res, next) {
+    const user = all_users.find((customer) => customer.id === parseInt(req.params.user_id, 10));
+    if (!user) {
+        res.status(404).end();
+        return next();
+    }
+    const { pwd } = req.body;
+    if (pwd !== user.password) {
+        res.status(401).end();
+        return next();
+    }
+    return user;
+}
+
 function readFromFile(res, next) {
     if (!fs.existsSync("savedData.JSON")) {
         console.log("... data does not exist, creating it now ...");
@@ -58,7 +72,10 @@ function readFromFile(res, next) {
 
 function writeToFile() {
     fs.writeFile("savedData.JSON", JSON.stringify(all_users), (err) => {
-
+        if (err) {
+            res.status(500).json({ error: "FAILED WRITING TO FILE" }).end();
+            return next(); 
+        } return true;
     });
 }
 
@@ -70,7 +87,7 @@ function writeToFile() {
 // name, initial deposit, password
 // /bank/user
 // user_id
-app.post("/", (req, res, next) => {
+app.post("/bank/user", (req, res, next) => {
     readFromFile(res, next);
     const name = standardizeName(req.body.name);
     const { deposit } = req.body;
@@ -88,53 +105,37 @@ app.post("/", (req, res, next) => {
     account.fund_requests = [];
     all_users = [...all_users, account];
     writeToFile();
-    res.json(account);
+    return res.json({ user_id: account.id });
 });
-/* 
-
 // GET
 // password
 // /bank/:user_id/balance
 // account_balance
-function checkAccount() {
-    console.log("Mhmm, you want to check if an account with an ID exists. " +
-                "Let’s do it! Give us the ID and we’ll check.\n");
-    const input = getNumberInput();
-    const user = all_users.find((obj) => obj.id === parseInt(input, 10));
-    console.log(all_users);
-    if (user) {
-        console.log("Awesome! This account actually exists. " +
-        "You should confirm with the owner that this account is actually his.");
-        console.log(user);
-    } else {
-        console.log(USER_NOT_FOUND);
-        console.log(user);
-    }
-}
-
-//PUT
+app.get("/bank/:user_id/balance", (req, res, next) => {
+    readFromFile();
+    const user = validateUser(req, res, next);
+    return res.json({ balance: user.balance });
+});
+// PUT
 // password, amount
 // /bank/:user_id/withdraw
 // new_account_balance (error if not enough value on account)
-function withdrawFunds() {
-    console.log("Okay, let's whip up some cash for you from these ones and zeroes");
-    if (!validatedUser) {
-        logIn();
+app.put("/bank/:user_id/withdraw", (req, res, next) => {
+    readFromFile();
+    const user = validateUser(req, res, next);
+    const withdrawAmount = req.body.amount;
+    if (withdrawAmount > user.balance) {
+        return res.status(401).json({
+            error: "NOT ENOUGH MONEY ON ACCOUNT",
+            balance: user.balance,
+        });
     }
-    console.log("How much money do you want to withdraw? " +
-                `(Current balance: ${validatedUser.balance}€)`);
-    let withdrawAmount = 0;
-    do {
-        withdrawAmount = readline.question();
-        if (withdrawAmount > validatedUser.balance) {
-            console.log("Unfortunately you don't have the balance for that. " +
-                        "Let's try a smaller amount");
-        }
-    } while (withdrawAmount > validatedUser.balance);
-    validatedUser.balance -= withdrawAmount;
-    console.log(`Awesome, you can now enjoy your ${withdrawAmount}€ in cash! ` +
-                `There's still ${validatedUser.balance}€ in your account, safe with us.`);
-}
+    user.balance -= withdrawAmount;
+    writeToFile();
+    return res.json({ new_account_balance: user.balance });
+});
+
+/* 
 
 // PUT
 // password, amount
