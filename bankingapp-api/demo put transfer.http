@@ -1,0 +1,9 @@
+// http://localhost:5000/bank/:user_id/transfer
+PUT http://localhost:5000/bank/3383758/transfer HTTP/1.1
+Content-Type: application/json
+
+{
+    "pwd": "turvallinensalasana",
+    "recipient_id": 319207843,
+    "amount": 1
+}

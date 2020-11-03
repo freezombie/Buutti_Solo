@@ -1,8 +1,8 @@
-POST http://localhost:5000/ HTTP/1.1
+POST http://localhost:5000/bank/user HTTP/1.1
 Content-Type: application/json
 
 {
-    "name": "Teuvo Testaaja",
-    "deposit": 25,
-    "pwd": "epäturvallinensalasana"
+    "name": "Tessa Testaaja",
+    "deposit": 250,
+    "pwd": "turvallinensalasana"
 }

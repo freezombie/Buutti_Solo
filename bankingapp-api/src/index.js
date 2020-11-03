@@ -134,52 +134,44 @@ app.put("/bank/:user_id/withdraw", (req, res, next) => {
     writeToFile();
     return res.json({ new_account_balance: user.balance });
 });
-
-/* 
-
 // PUT
 // password, amount
 // /bank/:user_id/deposit
 // new_account_balance
-function depositFunds() {
-    console.log("Okay, let's convert your cash in to some delicious ones and zeroes.");
-    if (!validatedUser) {
-        logIn();
-    }
-    console.log("How much money do you want to deposit? " +
-                `(Current balance: ${validatedUser.balance}€)`);
-    const depositAmount = parseInt(getNumberInput(), 10);
-    validatedUser.balance += depositAmount;
-    console.log(`Awesome, we removed ${depositAmount}€ from existence and stored them into our ` +
-                `system. Now your account's balance is ${validatedUser.balance}€`);
-}
-
+app.put("/bank/:user_id/deposit", (req, res, next) => {
+    readFromFile();
+    const user = validateUser(req, res, next);
+    const depositAmount = req.body.amount;
+    user.balance += depositAmount;
+    writeToFile();
+    return res.json({ new_account_balance: user.balance });
+});
 // EXTRA PUT
 // password, recipient_id, amount
 // /bank/:user_id/transfer
 // new_account_balance (error if not enough value on account)
-function transferFunds() {
-    console.log("Okay, let's slide these binary treats into someone else's pockets");
-    if (!validatedUser) {
-        logIn();
+app.put("/bank/:user_id/transfer", (req, res, next) => {
+    readFromFile();
+    const user = validateUser(req, res, next);
+    const recipient =
+        all_users.find((customer) => customer.id === parseInt(req.body.recipient_id, 10));
+    if (!recipient) {
+        res.status(404).end();
+        return next();
     }
-    console.log("How much money do you want to transfer? " +
-                `(Current balance: ${validatedUser.balance}€)`);
-    let transferAmount = 0;
-    do {
-        transferAmount = parseInt(readline.question(), 10);
-        if (transferAmount > validatedUser.balance) {
-            console.log("Unfortunately you don't have the balance for that. " +
-                        "Let's try a smaller amount");
-        }
-    } while (transferAmount > validatedUser.balance);
-    console.log("Awesome, we can do that. What is the ID of the account " +
-                "you want to transfer these funds into?");
-    const targetUser = findTargetUser();
-    validatedUser.balance -= transferAmount;
-    targetUser.balance += transferAmount;
-    console.log(`Awesome. We sent ${transferAmount} to an account with the ID of ${targetUser.id}`);
-}
+    const transferAmount = req.body.amount;
+    if (transferAmount > user.balance) {
+        return res.status(401).json({
+            error: "NOT ENOUGH MONEY ON ACCOUNT",
+            balance: user.balance,
+        });
+    }
+    user.balance -= transferAmount;
+    recipient.balance += transferAmount;
+    writeToFile();
+    return res.json({ new_account_balance: user.balance });
+});
+/* 
 // EXTRA PUTS
 // UPDATE NAME
 // password, new_name
