@@ -62,8 +62,8 @@ function readFromFile(res, next) {
         fs.writeFile("savedData.JSON", JSON.stringify(allUsers), (error) => {
             if (error) {
                 res.status(500).send("ERROR: FAILED TO WRITE INIT FILE").end();
-                return next(); // en oo ihan varma lopettaako tämä täältä app.postia.
-            } return true; // eslint valittaa muuten kun ei ole consistent return.
+                return next();
+            } return true;
         });
     } else {
         allUsers = JSON.parse(fs.readFileSync("savedData.JSON"));
@@ -115,7 +115,7 @@ app.get("/bank/:user_id/balance", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
     if (!user) {
-        return null; // näemmä ei auttanu return next ite funktiossa :(
+        return null;
     }
     return res.json({ balance: user.balance });
 });
@@ -127,7 +127,7 @@ app.put("/bank/:user_id/withdraw", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
     if (!user) {
-        return null; // näemmä ei auttanu return next ite funktiossa :(
+        return null;
     }
     const withdrawAmount = req.body.amount;
     if (withdrawAmount > user.balance) {
@@ -148,7 +148,7 @@ app.put("/bank/:user_id/deposit", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
     if (!user) {
-        return null; // näemmä ei auttanu return next ite funktiossa :(
+        return null;
     }
     const depositAmount = req.body.amount;
     user.balance += depositAmount;
@@ -163,7 +163,7 @@ app.put("/bank/:user_id/transfer", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
     if (!user) {
-        return null; // näemmä ei auttanu return next ite funktiossa :(
+        return null;
     }
     const recipient =
         allUsers.find((customer) => customer.id === parseInt(req.body.recipient_id, 10));
@@ -192,7 +192,7 @@ app.put("/bank/:user_id/name", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
     if (!user) {
-        return null; // näemmä ei auttanu return next ite funktiossa :(
+        return null;
     }
     user.name = standardizeName(req.body.new_name);
     writeToFile(res, next);
@@ -207,7 +207,7 @@ app.put("/bank/:user_id/password", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
     if (!user) {
-        return null; // näemmä ei auttanu return next ite funktiossa :(
+        return null;
     }
     user.password = req.body.new_password;
     writeToFile(res, next);
