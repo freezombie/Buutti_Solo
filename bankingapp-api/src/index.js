@@ -8,14 +8,14 @@ app.use(urlencoded({ extended: false }));
 
 const MAX_ID = 330000000;
 const MIN_ID = 1;
-let all_users = [];
+let allUsers = [];
 
 app.use((req, res, next) => {
     console.log(`METHOD: ${req.method}`);
     console.log(`PATH: ${req.path}`);
     console.log("BODY: ", req.body);
     console.log("QUERY: ", req.query);
-    console.log("ALL USERS: ", JSON.stringify(all_users));
+    console.log("ALL USERS: ", JSON.stringify(allUsers));
     console.log("----");
     next();
 });
@@ -25,7 +25,7 @@ const createId = function createId() {
     let possibleUser = null;
     do {
         const randomId = Math.floor(Math.random() * (MAX_ID - MIN_ID + 1) + MIN_ID);
-        possibleUser = all_users.find((obj) => obj.id === parseInt(randomId, 10));
+        possibleUser = allUsers.find((obj) => obj.id === parseInt(randomId, 10));
         if (!possibleUser) {
             returnedId = randomId;
         }
@@ -43,7 +43,7 @@ const standardizeName = function standardizeName(name) {
 };
 
 const validateUser = function validateUser(req, res, next) {
-    const user = all_users.find((customer) => customer.id === parseInt(req.params.user_id, 10));
+    const user = allUsers.find((customer) => customer.id === parseInt(req.params.user_id, 10));
     if (!user) {
         res.status(404).end();
         return next();
@@ -54,27 +54,27 @@ const validateUser = function validateUser(req, res, next) {
         return next();
     }
     return user;
-}
+};
 
 function readFromFile(res, next) {
     if (!fs.existsSync("savedData.JSON")) {
         console.log("... data does not exist, creating it now ...");
-        fs.writeFile("savedData.JSON", JSON.stringify(all_users), (error) => {
+        fs.writeFile("savedData.JSON", JSON.stringify(allUsers), (error) => {
             if (error) {
                 res.status(500).send("ERROR: FAILED TO WRITE INIT FILE").end();
                 return next(); // en oo ihan varma lopettaako tämä täältä app.postia.
             } return true; // eslint valittaa muuten kun ei ole consistent return.
         });
     } else {
-        all_users = JSON.parse(fs.readFileSync("savedData.JSON"));
+        allUsers = JSON.parse(fs.readFileSync("savedData.JSON"));
     }
 }
 
-function writeToFile() {
-    fs.writeFile("savedData.JSON", JSON.stringify(all_users), (err) => {
+function writeToFile(res, next) {
+    fs.writeFile("savedData.JSON", JSON.stringify(allUsers), (err) => {
         if (err) {
             res.status(500).json({ error: "FAILED WRITING TO FILE" }).end();
-            return next(); 
+            return next();
         } return true;
     });
 }
@@ -103,8 +103,8 @@ app.post("/bank/user", (req, res, next) => {
     account.id = id;
     account.balance = deposit;
     account.fund_requests = [];
-    all_users = [...all_users, account];
-    writeToFile();
+    allUsers = [...allUsers, account];
+    writeToFile(res, next);
     return res.json({ user_id: account.id });
 });
 // GET
@@ -114,6 +114,9 @@ app.post("/bank/user", (req, res, next) => {
 app.get("/bank/:user_id/balance", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
+    if (!user) {
+        return null; // näemmä ei auttanu return next ite funktiossa :(
+    }
     return res.json({ balance: user.balance });
 });
 // PUT
@@ -123,6 +126,9 @@ app.get("/bank/:user_id/balance", (req, res, next) => {
 app.put("/bank/:user_id/withdraw", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
+    if (!user) {
+        return null; // näemmä ei auttanu return next ite funktiossa :(
+    }
     const withdrawAmount = req.body.amount;
     if (withdrawAmount > user.balance) {
         return res.status(401).json({
@@ -131,7 +137,7 @@ app.put("/bank/:user_id/withdraw", (req, res, next) => {
         });
     }
     user.balance -= withdrawAmount;
-    writeToFile();
+    writeToFile(res, next);
     return res.json({ new_account_balance: user.balance });
 });
 // PUT
@@ -141,9 +147,12 @@ app.put("/bank/:user_id/withdraw", (req, res, next) => {
 app.put("/bank/:user_id/deposit", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
+    if (!user) {
+        return null; // näemmä ei auttanu return next ite funktiossa :(
+    }
     const depositAmount = req.body.amount;
     user.balance += depositAmount;
-    writeToFile();
+    writeToFile(res, next);
     return res.json({ new_account_balance: user.balance });
 });
 // EXTRA PUT
@@ -153,8 +162,11 @@ app.put("/bank/:user_id/deposit", (req, res, next) => {
 app.put("/bank/:user_id/transfer", (req, res, next) => {
     readFromFile();
     const user = validateUser(req, res, next);
+    if (!user) {
+        return null; // näemmä ei auttanu return next ite funktiossa :(
+    }
     const recipient =
-        all_users.find((customer) => customer.id === parseInt(req.body.recipient_id, 10));
+        allUsers.find((customer) => customer.id === parseInt(req.body.recipient_id, 10));
     if (!recipient) {
         res.status(404).end();
         return next();
@@ -168,35 +180,38 @@ app.put("/bank/:user_id/transfer", (req, res, next) => {
     }
     user.balance -= transferAmount;
     recipient.balance += transferAmount;
-    writeToFile();
+    writeToFile(res, next);
     return res.json({ new_account_balance: user.balance });
 });
-/* 
-// EXTRA PUTS
+// EXTRA PUT
 // UPDATE NAME
 // password, new_name
 // /bank/:user_id/name
 // new_username
+app.put("/bank/:user_id/name", (req, res, next) => {
+    readFromFile();
+    const user = validateUser(req, res, next);
+    if (!user) {
+        return null; // näemmä ei auttanu return next ite funktiossa :(
+    }
+    user.name = standardizeName(req.body.new_name);
+    writeToFile(res, next);
+    return res.json({ new_user_name: user.name });
+});
+// EXTRA PUT
 // UPDATE PASSWORD
 // password, new_password
 // /bank/:user_id/password
 // new_password
-function modifyAccount() {
-    console.log("You want to modify an accounts stored holder name? We can definitely do that!");
-    if (!validatedUser) {
-        logIn();
+app.put("/bank/:user_id/password", (req, res, next) => {
+    readFromFile();
+    const user = validateUser(req, res, next);
+    if (!user) {
+        return null; // näemmä ei auttanu return next ite funktiossa :(
     }
-    console.log("What is the new name for the account holder?");
-    let newName = validatedUser.name;
-    do {
-        newName = standardizeName(readline.question());
-        if (newName === validatedUser.name) {
-            console.log("I'm quite sure that's the same name. Try again!");
-        }
-    } while (newName === validatedUser.name);
-    console.log(`There we go! We will address you as ${newName} from now on`);
-    const userToChange = all_users.find((obj) => obj.id === parseInt(validatedUser.id, 10));
-    userToChange.name = newName;
-} */
+    user.password = req.body.new_password;
+    writeToFile(res, next);
+    return res.json({ new_password: user.password });
+});
 
 app.listen(5000);

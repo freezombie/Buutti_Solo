@@ -3,6 +3,6 @@ PUT http://localhost:5000/bank/319207843/deposit HTTP/1.1
 Content-Type: application/json
 
 {
-    "pwd": "epäturvallinensalasana",
+    "pwd": "todellaturvallinensalasana",
     "amount": 1
 }
