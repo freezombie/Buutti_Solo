@@ -97,12 +97,13 @@ app.post("/bank/user", (req, res, next) => {
     }
     const { pwd } = req.body;
     const id = createId();
-    const account = {};
-    account.name = name;
-    account.password = pwd;
-    account.id = id;
-    account.balance = deposit;
-    account.fund_requests = [];
+    const account = {
+        name,
+        password: pwd,
+        id,
+        balance: deposit,
+        fund_requests: [],
+    };
     allUsers = [...allUsers, account];
     writeToFile(res, next);
     return res.json({ user_id: account.id });
