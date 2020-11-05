@@ -8,24 +8,53 @@ app.use(urlencoded({ extended: false }));
 
 const MAX_ID = 330000000;
 const MIN_ID = 1;
-let allUsers = [];
+
+//ERRORS
+const NOT_FOUND = -1;
+const UNAUTHORIZED = -2;
+const ERROR_WRITING_FILE = -3;
+const ERROR_READING_FILE = -4;
+//let allUsers = [];
 
 app.use((req, res, next) => {
     console.log(`METHOD: ${req.method}`);
     console.log(`PATH: ${req.path}`);
     console.log("BODY: ", req.body);
     console.log("QUERY: ", req.query);
-    console.log("ALL USERS: ", JSON.stringify(allUsers));
+    console.log("ALL USERS: ", readFromFile());
     console.log("----");
     next();
 });
+
+const writeToFile = async (data) => {
+    fs.writeFile("savedData.JSON", JSON.stringify(data), (err) => {
+        if (err) {
+            console.log("returning error");
+            return ERROR_WRITING_FILE;
+            //res.status(500).json({ error: "FAILED WRITING TO FILE" }).end();
+        } else {
+            console.log("returning true");
+            return 1;
+        }
+    });
+}
+
+const readFromFile = () => {
+    if (!fs.existsSync("savedData.JSON")) {
+        return ERROR_READING_FILE;
+    } else return JSON.parse(fs.readFileSync("savedData.JSON"));
+}
 
 const createId = function createId() {
     let returnedId = 0;
     let possibleUser = null;
     do {
         const randomId = Math.floor(Math.random() * (MAX_ID - MIN_ID + 1) + MIN_ID);
-        possibleUser = allUsers.find((obj) => obj.id === parseInt(randomId, 10));
+        const accounts = readFromFile();
+        if(accounts === ERROR_READING_FILE) {
+            return randomId;
+        }
+        possibleUser = accounts.find((obj) => obj.id === parseInt(randomId, 10));
         if (!possibleUser) {
             returnedId = randomId;
         }
@@ -42,42 +71,20 @@ const standardizeName = function standardizeName(name) {
     return concattedName.trim();
 };
 
-const validateUser = function validateUser(req, res, next) {
-    const user = allUsers.find((customer) => customer.id === parseInt(req.params.user_id, 10));
+const validateUser = function validateUser(req) {
+    const accounts = readFromFile();
+    if(accounts === ERROR_READING_FILE) return ERROR_READING_FILE;
+    const user = accounts.find((account) => account.id === parseInt(req.params.user_id, 10));
     if (!user) {
-        res.status(404).end();
-        return next();
+        return NOT_FOUND;
     }
     const { pwd } = req.body;
     if (pwd !== user.password) {
-        res.status(401).end();
-        return next();
+        return UNAUTHORIZED;
+        //res.status(401).end();
     }
     return user;
 };
-
-function readFromFile(res, next) {
-    if (!fs.existsSync("savedData.JSON")) {
-        console.log("... data does not exist, creating it now ...");
-        fs.writeFile("savedData.JSON", JSON.stringify(allUsers), (error) => {
-            if (error) {
-                res.status(500).send("ERROR: FAILED TO WRITE INIT FILE").end();
-                return next();
-            } return true;
-        });
-    } else {
-        allUsers = JSON.parse(fs.readFileSync("savedData.JSON"));
-    }
-}
-
-function writeToFile(res, next) {
-    fs.writeFile("savedData.JSON", JSON.stringify(allUsers), (err) => {
-        if (err) {
-            res.status(500).json({ error: "FAILED WRITING TO FILE" }).end();
-            return next();
-        } return true;
-    });
-}
 
 // parameters the user should send to the API
 // path for endpoint
@@ -87,13 +94,11 @@ function writeToFile(res, next) {
 // name, initial deposit, password
 // /bank/user
 // user_id
-app.post("/bank/user", (req, res, next) => {
-    readFromFile(res, next);
+app.post("/bank/user", async (req, res, next) => {
     const name = standardizeName(req.body.name);
     const { deposit } = req.body;
     if (deposit < 10) {
-        res.send(`${JSON.stringify(req.body)}\nERROR: DEPOSIT TOO LOW`).end();
-        return next();
+        return res.send(`${JSON.stringify(req.body)}\nERROR: DEPOSIT TOO LOW`).end();
     }
     const { pwd } = req.body;
     const id = createId();
@@ -104,85 +109,129 @@ app.post("/bank/user", (req, res, next) => {
         balance: deposit,
         fund_requests: [],
     };
-    allUsers = [...allUsers, account];
-    writeToFile(res, next);
-    return res.json({ user_id: account.id });
+    const accounts = readFromFile();
+    let newAccounts;
+    if (accounts === ERROR_READING_FILE) {
+        newAccounts = [account];
+    } else {
+        newAccounts = [...accounts, account];
+    }
+    let jotain = await writeToFile(newAccounts);
+    console.log(jotain);
+    if(writeToFile(newAccounts)) {
+        return res.json({ user_id: account.id });
+    } else {
+        return res.status(500).send("Error writing to file");
+    }
 });
 // GET
 // password
 // /bank/:user_id/balance
 // account_balance
 app.get("/bank/:user_id/balance", (req, res, next) => {
-    readFromFile();
-    const user = validateUser(req, res, next);
-    if (!user) {
-        return null;
+    const user = validateUser(req);
+    switch (user) {
+        case NOT_FOUND:
+            return res.status(404).send("\nUSER NOT FOUND");
+        case UNAUTHORIZED:
+            return res.status(401).send("\nWrong password or otherwise unauthorized");
+        case ERROR_WRITING_FILE:
+            return res.status(500).send("\nError writing file");
+        default:
+            return res.json({ balance: user.balance });
     }
-    return res.json({ balance: user.balance });
+    
 });
 // PUT
 // password, amount
 // /bank/:user_id/withdraw
 // new_account_balance (error if not enough value on account)
-app.put("/bank/:user_id/withdraw", (req, res, next) => {
-    readFromFile();
-    const user = validateUser(req, res, next);
-    if (!user) {
-        return null;
+app.put("/bank/:user_id/withdraw", (req, res) => {
+    const user = validateUser(req);
+    switch (user) {
+        case NOT_FOUND:
+            return res.status(404).send("\nUSER NOT FOUND");
+        case UNAUTHORIZED:
+            return res.status(401).send("\nWrong password or otherwise unauthorized");
+        case ERROR_WRITING_FILE:
+            return res.status(500).send("\nError writing file");
+        default:
+            const withdrawAmount = req.body.amount;
+            if (withdrawAmount > user.balance) {
+                return res.status(401).json({
+                    error: "NOT ENOUGH MONEY ON ACCOUNT",
+                    balance: user.balance,
+                });
+            }
+            user.balance -= withdrawAmount;
+            const accounts = readFromFile();
+            if(accounts === ERROR_READING_FILE) return res.status(500).send("\N Error reading from file");
+            const newAccounts = [...accounts,user];
+            if(writeToFile(newAccounts)) return res.json({ user_id: user.id });
+            else return res.status(500).send("\N Error writing to file");
     }
-    const withdrawAmount = req.body.amount;
-    if (withdrawAmount > user.balance) {
-        return res.status(401).json({
-            error: "NOT ENOUGH MONEY ON ACCOUNT",
-            balance: user.balance,
-        });
-    }
-    user.balance -= withdrawAmount;
-    writeToFile(res, next);
-    return res.json({ new_account_balance: user.balance });
+    
 });
 // PUT
 // password, amount
 // /bank/:user_id/deposit
 // new_account_balance
 app.put("/bank/:user_id/deposit", (req, res, next) => {
-    readFromFile();
-    const user = validateUser(req, res, next);
-    if (!user) {
-        return null;
+    const user = validateUser(req);
+    switch (user) {
+        case NOT_FOUND:
+            return res.status(404).send("\nUSER NOT FOUND");
+        case UNAUTHORIZED:
+            return res.status(401).send("\nWrong password or otherwise unauthorized");
+        case ERROR_WRITING_FILE:
+            return res.status(500).send("\nError writing file");
+        default:
+            const depositAmount = req.body.amount;
+            user.balance += depositAmount;
+            const accounts = readFromFile();
+            if(accounts === ERROR_READING_FILE) return res.status(500).send("\N Error reading from file");
+            newAccounts = [...accounts,user];
+            if(writeToFile(newAccounts)) return res.json({ new_account_balance: user.balance });
+            else return res.status(500).send("\N Error writing to file");
     }
-    const depositAmount = req.body.amount;
-    user.balance += depositAmount;
-    writeToFile(res, next);
-    return res.json({ new_account_balance: user.balance });
+    
 });
 // EXTRA PUT
 // password, recipient_id, amount
 // /bank/:user_id/transfer
 // new_account_balance (error if not enough value on account)
 app.put("/bank/:user_id/transfer", (req, res, next) => {
-    readFromFile();
-    const user = validateUser(req, res, next);
-    if (!user) {
-        return null;
+    const user = validateUser(req);
+    switch (user) {
+        case NOT_FOUND:
+            return res.status(404).send("\nUSER NOT FOUND");
+        case UNAUTHORIZED:
+            return res.status(401).send("\nWrong password or otherwise unauthorized");
+        case ERROR_WRITING_FILE:
+            return res.status(500).send("\nError writing file");
+        default:
+            const recipient =
+                readFromFile().find((customer) => customer.id === parseInt(req.body.recipient_id, 10));
+            if (!recipient) {
+                res.status(404).end();
+                return next();
+            }
+            const transferAmount = req.body.amount;
+            if (transferAmount > user.balance) {
+                return res.status(401).json({
+                    error: "NOT ENOUGH MONEY ON ACCOUNT",
+                    balance: user.balance,
+                });
+            }
+            user.balance -= transferAmount;
+            recipient.balance += transferAmount;
+            const accounts = readFromFile();
+            if(accounts === ERROR_READING_FILE) return res.status(500).send("\N Error reading from file");
+            newAccounts = [...accounts,user];
+            if(writeToFile(newAccounts)) return res.json({ new_account_balance: user.balance });
+            else return res.status(500).send("\N Error writing to file");
     }
-    const recipient =
-        allUsers.find((customer) => customer.id === parseInt(req.body.recipient_id, 10));
-    if (!recipient) {
-        res.status(404).end();
-        return next();
-    }
-    const transferAmount = req.body.amount;
-    if (transferAmount > user.balance) {
-        return res.status(401).json({
-            error: "NOT ENOUGH MONEY ON ACCOUNT",
-            balance: user.balance,
-        });
-    }
-    user.balance -= transferAmount;
-    recipient.balance += transferAmount;
-    writeToFile(res, next);
-    return res.json({ new_account_balance: user.balance });
+    
 });
 // EXTRA PUT
 // UPDATE NAME
@@ -190,14 +239,22 @@ app.put("/bank/:user_id/transfer", (req, res, next) => {
 // /bank/:user_id/name
 // new_username
 app.put("/bank/:user_id/name", (req, res, next) => {
-    readFromFile();
-    const user = validateUser(req, res, next);
-    if (!user) {
-        return null;
+    const user = validateUser(req);
+    switch (user) {
+        case NOT_FOUND:
+            return res.status(404).send("\nUSER NOT FOUND");
+        case UNAUTHORIZED:
+            return res.status(401).send("\nWrong password or otherwise unauthorized");
+        case ERROR_WRITING_FILE:
+            return res.status(500).send("\nError writing file");
+        default:
+            user.name = standardizeName(req.body.new_name);
+            const accounts = readFromFile();
+            if(accounts === ERROR_READING_FILE) return res.status(500).send("\N Error reading from file");
+            newAccounts = [...accounts,user];
+            if(writeToFile(newAccounts)) return res.json({ new_user_name: user.name });
+            else return res.status(500).send("\N Error writing to file");
     }
-    user.name = standardizeName(req.body.new_name);
-    writeToFile(res, next);
-    return res.json({ new_user_name: user.name });
 });
 // EXTRA PUT
 // UPDATE PASSWORD
@@ -205,14 +262,22 @@ app.put("/bank/:user_id/name", (req, res, next) => {
 // /bank/:user_id/password
 // new_password
 app.put("/bank/:user_id/password", (req, res, next) => {
-    readFromFile();
-    const user = validateUser(req, res, next);
-    if (!user) {
-        return null;
+    const user = validateUser(req);
+    switch (user) {
+        case NOT_FOUND:
+            return res.status(404).send("\nUSER NOT FOUND");
+        case UNAUTHORIZED:
+            return res.status(401).send("\nWrong password or otherwise unauthorized");
+        case ERROR_WRITING_FILE:
+            return res.status(500).send("\nError writing file");
+        default:
+            user.password = req.body.new_password;
+            const accounts = readFromFile();
+            if(accounts === ERROR_READING_FILE) return res.status(500).send("\N Error reading from file");
+            newAccounts = [...accounts,user];
+            if(writeToFile(newAccounts)) return res.json({ new_password: user.password });
+            else return res.status(500).send("\N Error writing to file");
     }
-    user.password = req.body.new_password;
-    writeToFile(res, next);
-    return res.json({ new_password: user.password });
 });
 
 app.listen(5000);
