@@ -2,6 +2,10 @@ import accountModel from "../models/accountModel.js";
 
 const MAX_ID = 320000000;
 const MIN_ID = 10000
+
+const NOT_FOUND = -1;
+const UNAUTHORIZED = -2;
+
 const createId = async (req, res) => {
     let returnedId = 0;
     let possibleAccount = null;
@@ -24,14 +28,21 @@ const standardizeName = function standardizeName(name) {
     return concattedName.trim();
 };
 
+const validateUser = async (req) => {
+    const account = await accountModel.findOne({id: req.params.id});
+    if(!account) {
+        return NOT_FOUND;
+    } else if (req.body.password !== account.password) {
+        return UNAUTHORIZED;
+    } else return account;
+}
+
 export const newAccount = async (req, res) => {
     const { name, deposit, password } = req.body;
     if( deposit< 10) {
         res.status(500).send("\nNot enough money. Minimum initial deposit is 10 euros");
     } else { // vois kyl toisaalta tarkistaa onko kaikki tiedot.
         const id = await createId(req, res);
-        console.log(typeof(id));
-        console.log(id);
         const account = {
             id,
             name: standardizeName(name),
@@ -46,18 +57,20 @@ export const newAccount = async (req, res) => {
 };
 
 export const getBalance = async (req, res) => {
-
+    const account = await validateUser(req);
+    switch (account) {
+        case NOT_FOUND:
+            return res.status(404).send("Account not found");
+        case UNAUTHORIZED:
+            return res.status(401).send("Failed to verify user. Wrong password?");
+        default:
+            return res.json({ balance: account.balance });
+    }
 };
 
-export const withdrawMoney = async (req, res) => {
+export const modifyBalance = async (req, res) => {
 
 };
-
-export const depositMoney = async (req,res) => {
-
-};
-
-// yhdistä withdraw money ja deposit money käytännössä modify balanceksi?
 
 export const transferMoney = async (req,res) => {
     // withdrawmoney amount

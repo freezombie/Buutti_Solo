@@ -8,8 +8,8 @@ import {
 const router = express.Router();
 
 router.post("/new", newAccount);
+router.get("/:id", getBalance);
 /*
-router.post("/new", newStudent);
 router.get("/all", getStudents);
 router.get("/:id", getStudent); // järjestyksellä on väliä, jos tämä olisi ennen all, niin sillon idhen asetettaisiin tuo all.
 router.put("/:id", updateStudent);
