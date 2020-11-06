@@ -2,18 +2,18 @@ import express from "express";
 import {
     newAccount,
     getBalance,
+    getAllAccounts,
+    modifyBalance,
     transferMoney,
     modifyAccount,
 } from "../controllers/accountController.js";
 const router = express.Router();
 
 router.post("/new", newAccount);
+router.get("/all", getAllAccounts);
 router.get("/:id", getBalance);
-/*
-router.get("/all", getStudents);
-router.get("/:id", getStudent); // järjestyksellä on väliä, jos tämä olisi ennen all, niin sillon idhen asetettaisiin tuo all.
-router.put("/:id", updateStudent);
-router.delete("/:id", deleteStudent);
-*/
+router.put("/:id", modifyBalance);
+router.put("/transfer/:id", transferMoney);
+router.put("/modify/:id", modifyAccount); // ois kyl nätimpi ku ois yhistettynä modifybalanceen.
 
 export default router;
