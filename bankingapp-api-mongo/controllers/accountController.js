@@ -1,4 +1,5 @@
 import { json } from "express";
+import bcrypt from "bcrypt";
 import accountModel from "../models/accountModel.js";
 
 const MAX_ID = 320000000;
@@ -6,6 +7,12 @@ const MIN_ID = 10000
 
 const NOT_FOUND = -1;
 const UNAUTHORIZED = -2;
+
+const encryptPassword = async (pwd) => {
+    const saltRounds = 10
+    const hashedPassword = await bcrypt.hash(pwd,saltRounds);
+    return hashedPassword;
+}
 
 const createId = async (req, res) => {
     let returnedId = 0;
@@ -33,7 +40,7 @@ const validateUser = async (req) => {
     const account = await accountModel.findOne({id: req.params.id});
     if(!account) {
         return NOT_FOUND;
-    } else if (req.body.password !== account.password) {
+    } else if (!await bcrypt.compare(req.body.password, account.password)) {
         return UNAUTHORIZED;
     } else return account;
 }
@@ -54,15 +61,17 @@ export const newAccount = async (req, res) => {
         res.status(500).send("\nNot enough money. Minimum initial deposit is 10 euros");
     } else { // vois kyl toisaalta tarkistaa onko kaikki tiedot.
         const id = await createId(req, res);
+        const hashedPassword = await encryptPassword(password);
         const account = {
             id,
             name: standardizeName(name),
-            password,
+            password: hashedPassword,
             balance: deposit,
             fund_requests: [],
         };
         const accountData = new accountModel(account);
         await accountData.save();
+        account.password = req.body.password // ei haluta palauttaa enkryptoitua salasanaa
         res.json(account);
     }
 };
@@ -147,8 +156,9 @@ export const modifyAccount = async (req,res) => {
                 }
             }
             if ("newPassword" in req.body) {
+                const newPassword = await encryptPassword(req.body.newPassword);
                 const operation = 
-                    await accountModel.updateOne(account, { $set: { password: req.body.newPassword } });
+                    await accountModel.updateOne(account, { $set: { password: newPassword } });
                 if(operation.ok === 1) {
                     returnJson.password = req.body.newPassword;
                 } else {

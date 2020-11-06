@@ -2,7 +2,7 @@ POST http://localhost:5000/accounts/new HTTP/1.1
 Content-Type: application/json
 
 {
-    "name" : "Takeda Lainantakaaja",
-    "deposit": "15000",
-    "password": "takaammelainasi"
+    "name" : "Erkki Enkryptoitu",
+    "deposit": "20",
+    "password": "enkryptoitusalasana"
 }
