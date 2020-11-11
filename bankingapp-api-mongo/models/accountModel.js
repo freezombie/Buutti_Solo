@@ -10,6 +10,6 @@ const accountSchema = new mongoose.Schema({
 // tänne voi nimetä collectionin jos haluaa.
 
 const AccountModel = mongoose.model("account", accountSchema);
-// collectionistä tulee vissiin automaagisesti accounts. 
+// collectionistä tulee vissiin automaagisesti accounts.
 
 export default AccountModel;

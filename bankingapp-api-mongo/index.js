@@ -1,6 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
-import accountRouter from "./routes/accountRouter.js"
+import accountRouter from "./routes/accountRouter.js";
 
 const requestLogger = (req, res, next) => {
     console.log(`METHOD: ${req.method}`);
@@ -18,9 +18,9 @@ const mongoUrl = "mongodb://localhost:27017/pankkibankDB";
 const connectMongoose = async () => {
     await mongoose.connect(
         mongoUrl,
-        { useNewUrlParser: true, useUnifiedTopology: true }
+        { useNewUrlParser: true, useUnifiedTopology: true },
     );
-}
+};
 
 connectMongoose();
 app.use(express.json());
