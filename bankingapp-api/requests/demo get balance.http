@@ -1,0 +1,7 @@
+//GET http://localhost:5000/bank/:user_id/balance
+GET http://localhost:5000/bank/298164199/balance HTTP/1.1
+Content-Type: application/json
+
+{
+    "pwd": "toope"
+}
