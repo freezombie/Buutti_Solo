@@ -43,7 +43,7 @@ const GetComponent = (props) => {
             if( route === "todos") {
                 return <Todos data={data} />
             } else if (route === "posts") {
-                return <Posts data={data} />
+                return <Posts data={data} setData={(newData) => setData(newData)} />
                 } else if (route === "comments") {
                     return <Comments data={data} />
                 } else if (route === "photos") {
