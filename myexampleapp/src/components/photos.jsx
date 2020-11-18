@@ -1,4 +1,8 @@
+import { findByLabelText } from "@testing-library/react";
+import { useState } from "react";
+
 const Photos = (props) => {
+    const [selectedImage, setSelectedImage] = useState();
     const {
         data
     } = props
@@ -7,6 +11,12 @@ const Photos = (props) => {
         display: "block",
         marginLeft: "auto", 
         marginRight: "auto",
+    };
+
+    const thumbnailDivStyle = {
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "space-evenly",
     };
 
     const thumbnailStyle = {
@@ -21,18 +31,18 @@ const Photos = (props) => {
     );
 
     const selectImage = (item) => {
-        photoArray(item);
+        setSelectedImage(item);
     }
 
-    const photoArray = (selectedImage) => {
+    const photoArray = () => {
         return (
             <div class="images">
-                {console.log(selectedImage)}
+                {console.log(selectedImage)} 
                     {selectedImage ?
                     <div class="row">
                         <Photos data={selectedImage} />
-                    </div> : "Nothing selected" + JSON.stringify(selectedImage) };
-                <div class="row">
+                    </div> : "Nothing selected" }
+                <div class="row" style={thumbnailDivStyle}>
                 { data.map((item, index) => (
                     <div key={index} className = "photosArray">
                         <img src={item.thumbnailUrl} style={ thumbnailStyle } alt="" onClick={() => selectImage(item)} /> 

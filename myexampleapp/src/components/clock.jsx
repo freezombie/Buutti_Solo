@@ -11,7 +11,7 @@ const clockStyle = {
 };
 
 const Clock = (props) => {
-    const [time, setTime] = useState(null);
+    const [time, setTime] = useState(new Date());
 
     useEffect(() => {
         setTime(new Date())
