@@ -1,6 +1,14 @@
 import express from "express";
 import mongoose from "mongoose";
 import accountRouter from "./routes/accountRouter.js";
+import authRouter from "./routes/authRouter.js";
+import expressJwt from "express-jwt";
+import dotenv from "dotenv";
+
+dotenv.config();
+const app = express();
+
+//require("dotenv").config();
 
 const requestLogger = (req, res, next) => {
     console.log(`METHOD: ${req.method}`);
@@ -11,9 +19,7 @@ const requestLogger = (req, res, next) => {
     next();
 };
 
-const app = express();
 const mongoUrl = "mongodb://localhost:27017/pankkibankDB";
-// pankkibankDB on db nimi.
 
 const connectMongoose = async () => {
     await mongoose.connect(
@@ -25,7 +31,17 @@ const connectMongoose = async () => {
 connectMongoose();
 app.use(express.json());
 app.use(requestLogger);
-app.use("/accounts/", accountRouter);
+app.use("/api", expressJwt({ secret: process.env.SECRET, algorithms: ['HS256'] }))
+app.use("/auth", authRouter);
+app.use("/api/accounts", accountRouter);
+
+app.use((err,res) => {
+    console.error(err);
+    if (err.name === "UnauthorizedError") {
+        res.status(err.status);
+    }
+    return res.send({ message: err.message});
+});
 
 app.listen(5000, () => {
     console.log("listening to port 5000");

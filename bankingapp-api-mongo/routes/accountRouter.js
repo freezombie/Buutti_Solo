@@ -1,20 +1,21 @@
 import express from "express";
 import {
-    newAccount,
     getBalance,
     getAllAccounts,
     modifyBalance,
     transferMoney,
     modifyAccount,
+    testAccount,
 } from "../controllers/accountController.js";
 
-const router = express.Router();
+const accountRouter = express.Router();
 
-router.post("/new", newAccount);
-router.get("/all", getAllAccounts);
-router.get("/:id", getBalance);
-router.put("/:id", modifyBalance);
-router.put("/transfer/:id", transferMoney);
-router.put("/modify/:id", modifyAccount); // ois kyl nätimpi ku ois yhistettynä modifybalanceen.
+accountRouter.get("/test", testAccount);
+accountRouter.get("/all", getAllAccounts);
+accountRouter.get("/", getBalance);
+accountRouter.put("/:id", modifyBalance);
+accountRouter.put("/transfer/:id", transferMoney);
+accountRouter.put("/modify/:id", modifyAccount); // ois kyl nätimpi ku ois yhistettynä modifybalanceen.
+accountRouter.get("/test", testAccount);
 
-export default router;
+export default accountRouter;

@@ -1,91 +1,41 @@
 import { json } from "express";
 import bcrypt from "bcrypt";
 import AccountModel from "../models/accountModel.js";
-
-const MAX_ID = 320000000;
-const MIN_ID = 10000;
+import UserModel from "../models/accountModel.js";
 
 const NOT_FOUND = -1;
 const UNAUTHORIZED = -2;
 
-const encryptPassword = async (pwd) => {
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(pwd, saltRounds);
-    return hashedPassword;
-};
-
-const createId = async () => {
-    let returnedId = 0;
-    let possibleAccount = null;
-    do {
-        const randomId = Math.floor(Math.random() * (MAX_ID - MIN_ID + 1) + MIN_ID);
-        possibleAccount = await AccountModel.findOne({ id: randomId });
-        if (!possibleAccount) {
-            returnedId = randomId;
-        }
-    } while (possibleAccount);
-    return returnedId;
-};
-
-const standardizeName = function standardizeName(name) {
-    const splitName = name.split(" ");
-    let concattedName = "";
-    splitName.forEach((namePart) => {
-        concattedName += (namePart.charAt(0).toUpperCase() + namePart.slice(1)).concat(" ");
-    });
-    return concattedName.trim();
-};
-
-const validateUser = async (req) => {
-    const account = await AccountModel.findOne({ id: req.params.id });
-    if (!account) {
-        return NOT_FOUND;
-    } if (!await bcrypt.compare(req.body.password, account.password)) {
-        return UNAUTHORIZED;
-    } return account;
-};
-
 export const getAllAccounts = async (req, res) => {
     // for development and debugging. Delete when done.
     const accounts = await AccountModel.find();
-    let responseMsg = "";
-    accounts.forEach((account) => {
-        responseMsg += account;
+    res.json(accounts);
+};
+
+export const testAccount = async (req,res) => {
+    return res.send(req.user);
+}
+
+export const newAccount = async (req, res, _id) => {
+    const account = {
+        user: _id,
+        balance: req.body.deposit,
+        fund_requests: []
+    }
+    const accountData = new AccountModel(account);
+    await accountData.save();
+    return account;
+};
+
+export const getBalance = async (req, res, next) => {
+    // reqissä näemmä on piilossa tuo _id niin ei tarvii hakea useria erikseen siellä req.userissa kulkevalla normi idllä.
+    AccountModel.findOne({id: req.user._id}, (err, account) => {
+        if(err) {
+            res.status(500);
+            return next(err);
+        }
+        return res.send({account_balance: account.balance});
     });
-    res.send(responseMsg);
-};
-
-export const newAccount = async (req, res) => {
-    const { name, deposit, password } = req.body;
-    if (deposit < 10) {
-        res.status(500).send("\nNot enough money. Minimum initial deposit is 10 euros");
-    } else { // vois kyl toisaalta tarkistaa onko kaikki tiedot.
-        const id = await createId(req, res);
-        const hashedPassword = await encryptPassword(password);
-        const account = {
-            id,
-            name: standardizeName(name),
-            password: hashedPassword,
-            balance: deposit,
-            fund_requests: [],
-        };
-        const accountData = new AccountModel(account);
-        await accountData.save();
-        account.password = req.body.password; // ei haluta palauttaa enkryptoitua salasanaa
-        res.json(account);
-    }
-};
-
-export const getBalance = async (req, res) => {
-    const account = await validateUser(req);
-    switch (account) {
-    case NOT_FOUND:
-        return res.status(404).send("Account not found");
-    case UNAUTHORIZED:
-        return res.status(401).send("Failed to verify user. Wrong password?");
-    default:
-        return res.json({ balance: account.balance });
-    }
 };
 
 export const modifyBalance = async (req, res) => {
