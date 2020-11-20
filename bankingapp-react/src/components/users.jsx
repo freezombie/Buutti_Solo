@@ -1,21 +1,29 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import User from "./user.jsx";
 
+
 const Users = () => {
+
+    
     // this whole thing is for testing purposes.
-    const [data, setData] = useState(null);
+    const [data, setData] = useState();
 
     const getData = async () => {
         const url = "http://localhost:5000/accounts/all";
         const response = await axios.get(url);
         setData(response.data);
     }
-    console.log(data);
-    getData();
+
+    useEffect(() => {
+        getData();
+    }, []);
+
     return (
-    data ?
+    data ?        
         <div className="usersContainer">
+        {console.log("data: ")}
+        {console.log(data)}
         <table>
             <tr>
                 <th>ID</th>
@@ -26,7 +34,8 @@ const Users = () => {
             <User data={item}/>
         ))}
         </table>
-    </div> : <p>waiting for data</p>
+    </div> : 
+    <p>waiting for data</p>
     );
 }
 
