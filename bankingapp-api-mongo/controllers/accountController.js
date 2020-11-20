@@ -1,7 +1,7 @@
 import { json } from "express";
 import bcrypt from "bcrypt";
 import AccountModel from "../models/accountModel.js";
-import UserModel from "../models/accountModel.js";
+import UserModel from "../models/userModel.js";
 
 const NOT_FOUND = -1;
 const UNAUTHORIZED = -2;
@@ -39,50 +39,58 @@ export const getBalance = async (req, res, next) => {
 };
 
 export const modifyBalance = async (req, res) => {
-    const account = await validateUser(req);
-    switch (account) {
-    case NOT_FOUND:
-        return res.status(404).send("Account not found");
-    case UNAUTHORIZED:
-        return res.status(401).send("Failed to verify user. Wrong password?");
-    default: {
-        const operation =
-                await AccountModel.updateOne(account, { $inc: { balance: req.body.amount } });
-        // Toimii miinusarvoillakin.
-        if (operation.ok === 1) {
-            // en halua hakea uudestaan tietokannasta, koska minusta se on turha haku.
-            const balanceMsg = req.body.amount + account.balance;
-            return res.json({ balance: balanceMsg });
+    const account = await AccountModel.findOne({id: req.user._id}, (err) => {
+        if(err) {
+            res.status(500);
+            return next(err);
         }
-        return res.status(500).res.send("Database operation failed.");
+    });
+    const operation = 
+        await AccountModel.updateOne(account, { $inc: { balance: req.body.amount } });
+    if (operation.ok === 1) {
+        const balanceMsg = req.body.amount + account.balance;
+        return res.json({ balance: balanceMsg });
     }
-    }
+    return res.status(500).res.send("Database operation failed.");
 };
 
-export const transferMoney = async (req, res) => {
-    const account = await validateUser(req);
-    switch (account) {
-    case NOT_FOUND:
-        return res.status(404).send("Account not found");
-    case UNAUTHORIZED:
-        return res.status(401).send("Failed to verify user. Wrong password?");
-    default: {
-        if (req.body.amount <= 0) {
-            return res.status(500).send("The amount must be positive");
+export const transferMoney = async (req, res, next) => {
+    const account = await AccountModel.findOne({id: req.user._id}, (err) => {
+        if(err) {
+            res.status(500);
+            return next(err);
         }
-        const operation =
-                await AccountModel.updateOne(account, { $inc: { balance: -req.body.amount } });
-        const operation2 =
-                await AccountModel.updateOne({ id: req.body.target_id },
-                    { $inc: { balance: req.body.amount } });
-        if (operation.ok === 1 && operation2.ok === 1) {
-            const balanceMsg = account.balance - req.body.amount;
-            return res.json({ balance: balanceMsg });
+    });
+
+    const targetUser = await UserModel.findOne({id: `${req.body.target_id}`}, (err, targetUser) => {
+        if(!targetUser) {
+            return res.status(500).send(`No user by ID: ${req.body.target_id}`);
         }
-        return res.status(500).res.send("Database operation failed.");
+    });
+
+    const targetAccount = await AccountModel.findOne({user: targetUser._id}, (err, targetAccount) => {
+        if(!targetAccount) {
+            return res.status(500).send(`No account associated to ID: ${req.body.target_id}`);
+        }
+    });
+    
+    if (req.body.amount <= 0) {
+        return res.status(500).send("The amount must be positive");
     }
-    }
+    await AccountModel.updateOne(account, { $inc: { balance: -req.body.amount } }, (err) => {
+        if(err){
+            return res.status(500).send("Couldn't update own account balance");
+        }
+    });
+    await AccountModel.updateOne(targetAccount,{ $inc: { balance: req.body.amount } }, (err) => {
+        if(err){
+            return res.status(500).send("Couldn't update target users' account");
+        }
+    });
+    const balanceMsg = account.balance - req.body.amount;
+    return res.send({ balance: balanceMsg });
 };
+
 // alla olevaanhan periaatteessa vois yhistää balancenkin
 // jos vaan tarkistaa että onko bodyssä mukana amounttia.
 export const modifyAccount = async (req, res) => {

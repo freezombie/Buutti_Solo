@@ -36,6 +36,11 @@ const standardizeName = function standardizeName(name) {
     return concattedName.trim();
 };
 
+export const getAll = async (req, res) => {
+    const users = await UserModel.find();
+    res.json(users);
+}
+
 export const newUser = async (req,res) => {
     const { name, deposit, password } = req.body;
     if (deposit < 10) {
