@@ -4,6 +4,7 @@ import accountRouter from "./routes/accountRouter.js";
 import authRouter from "./routes/authRouter.js";
 import expressJwt from "express-jwt";
 import dotenv from "dotenv";
+import userRouter from "./routes/userRouter.js";
 
 dotenv.config();
 const app = express();
@@ -34,6 +35,7 @@ app.use(requestLogger);
 app.use("/api", expressJwt({ secret: process.env.SECRET, algorithms: ['HS256'] }))
 app.use("/auth", authRouter);
 app.use("/api/accounts", accountRouter);
+app.use("/api/user", userRouter);
 
 app.use((err,res) => {
     console.error(err);

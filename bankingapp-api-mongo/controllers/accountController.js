@@ -13,7 +13,12 @@ export const getAllAccounts = async (req, res) => {
 };
 
 export const testAccount = async (req,res) => {
-    return res.send(req.user);
+    AccountModel.findOne({user: req.user._id}, (err, account) => {
+        if(err) {
+            res.status(500).send("Failed to find account");
+        }
+        return res.status(200).send(account);
+    });
 }
 
 export const newAccount = async (req, res, _id) => {
@@ -29,20 +34,19 @@ export const newAccount = async (req, res, _id) => {
 
 export const getBalance = async (req, res, next) => {
     // reqissä näemmä on piilossa tuo _id niin ei tarvii hakea useria erikseen siellä req.userissa kulkevalla normi idllä.
-    AccountModel.findOne({id: req.user._id}, (err, account) => {
+    AccountModel.findOne({user: req.user._id}, (err, account) => {
         if(err) {
-            res.status(500);
-            return next(err);
+            res.status(500).send("Failed to find account");
         }
+        console.log(account);
         return res.send({account_balance: account.balance});
     });
 };
 
 export const modifyBalance = async (req, res) => {
-    const account = await AccountModel.findOne({id: req.user._id}, (err) => {
+    const account = await AccountModel.findOne({user: req.user._id}, (err) => {
         if(err) {
-            res.status(500);
-            return next(err);
+            res.status(500).send("Failed to find account");
         }
     });
     const operation = 
@@ -55,13 +59,13 @@ export const modifyBalance = async (req, res) => {
 };
 
 export const transferMoney = async (req, res, next) => {
-    const account = await AccountModel.findOne({id: req.user._id}, (err) => {
+    const account = await AccountModel.findOne({user: req.user._id}, (err) => {
         if(err) {
             res.status(500);
             return next(err);
         }
     });
-
+    // tähän vois lisätä ettei voi asettaa itseänsä targetiksi.
     const targetUser = await UserModel.findOne({id: `${req.body.target_id}`}, (err, targetUser) => {
         if(!targetUser) {
             return res.status(500).send(`No user by ID: ${req.body.target_id}`);
@@ -71,6 +75,9 @@ export const transferMoney = async (req, res, next) => {
     const targetAccount = await AccountModel.findOne({user: targetUser._id}, (err, targetAccount) => {
         if(!targetAccount) {
             return res.status(500).send(`No account associated to ID: ${req.body.target_id}`);
+        }
+        if(err) {
+            return res.status(500).send("Error encountered while finding target users' account");
         }
     });
     
@@ -89,42 +96,4 @@ export const transferMoney = async (req, res, next) => {
     });
     const balanceMsg = account.balance - req.body.amount;
     return res.send({ balance: balanceMsg });
-};
-
-// alla olevaanhan periaatteessa vois yhistää balancenkin
-// jos vaan tarkistaa että onko bodyssä mukana amounttia.
-export const modifyAccount = async (req, res) => {
-    const account = await validateUser(req);
-    switch (account) {
-    case NOT_FOUND:
-        return res.status(404).send("Account not found");
-    case UNAUTHORIZED:
-        return res.status(401).send("Failed to verify user. Wrong password?");
-    default: {
-        if (!("newName" in req.body) && !("newPassword" in req.body)) {
-            return res.status(500).send("Failed to find any required body parameters");
-        }
-        let returnJson;
-        if ("newName" in req.body) {
-            const operation =
-                    await AccountModel.updateOne(account, { $set: { name: req.body.newName } });
-            if (operation.ok === 1) {
-                returnJson = { name: req.body.newName };
-            } else {
-                return res.status(500).res.send("Database operation failed.");
-            }
-        }
-        if ("newPassword" in req.body) {
-            const newPassword = await encryptPassword(req.body.newPassword);
-            const operation =
-                    await AccountModel.updateOne(account, { $set: { password: newPassword } });
-            if (operation.ok === 1) {
-                returnJson.password = req.body.newPassword;
-            } else {
-                return res.status(500).res.send("Database operation failed.");
-            }
-        }
-        return res.json(returnJson);
-    }
-    }
 };
