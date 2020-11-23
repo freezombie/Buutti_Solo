@@ -6,7 +6,7 @@ const accountSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: UserModel,
         required: true,
-        unique: true
+        unique: true,
     },
     balance: Number,
     fund_requests: Array,

@@ -1,15 +1,15 @@
 import express from "express";
 import mongoose from "mongoose";
-import accountRouter from "./routes/accountRouter.js";
-import authRouter from "./routes/authRouter.js";
 import expressJwt from "express-jwt";
 import dotenv from "dotenv";
+import accountRouter from "./routes/accountRouter.js";
+import authRouter from "./routes/authRouter.js";
 import userRouter from "./routes/userRouter.js";
 
 dotenv.config();
 const app = express();
 
-//require("dotenv").config();
+// require("dotenv").config();
 
 const requestLogger = (req, res, next) => {
     console.log(`METHOD: ${req.method}`);
@@ -32,17 +32,17 @@ const connectMongoose = async () => {
 connectMongoose();
 app.use(express.json());
 app.use(requestLogger);
-app.use("/api", expressJwt({ secret: process.env.SECRET, algorithms: ['HS256'] }))
+app.use("/api", expressJwt({ secret: process.env.SECRET, algorithms: ["HS256"] }));
 app.use("/auth", authRouter);
 app.use("/api/accounts", accountRouter);
 app.use("/api/user", userRouter);
 
-app.use((err,res) => {
-    console.error(err);
+app.use((err, res) => {
+    //console.error(err);
     if (err.name === "UnauthorizedError") {
         res.status(err.status);
     }
-    return res.send({ message: err.message});
+    return res.send({ message: err.message });
 });
 
 app.listen(5000, () => {

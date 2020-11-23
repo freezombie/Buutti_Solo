@@ -10,6 +10,13 @@
     width: 512px;
 }
 
+#frontpageForm {
+    width: 50%;
+    padding-top: 15%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .leftLink {
     float: left;
 }

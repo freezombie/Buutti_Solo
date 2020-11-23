@@ -4,20 +4,18 @@ const userSchema = new mongoose.Schema({
     id: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
     },
     name: {
-        type:String,
-        required: true
+        type: String,
+        required: true,
     },
     password: {
         type: String,
-        required: true
+        required: true,
     },
 });
 
-
 const UserModel = mongoose.model("user", userSchema);
-
 
 export default UserModel;

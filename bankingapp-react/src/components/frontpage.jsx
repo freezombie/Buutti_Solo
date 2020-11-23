@@ -2,6 +2,8 @@ import "./frontpage.css";
 import { Button } from 'antd';
 import "antd/dist/antd.css";
 import { useState } from 'react';
+import Signup from "./signup.jsx";
+import Login from "./login.jsx";
 
 function Frontpage(props) {
     const [onFrontpage, setOnFrontpage] = useState(true);
@@ -33,11 +35,15 @@ function Frontpage(props) {
         );
     } else if (onLoginPage) {
         return (
-            <p>On login page</p>
+            <div id="frontPage">
+                <Login />
+            </div>
         );
     } else if (onSignupPage) {
         return (
-            <p>on SignupPage</p>
+            <div id="frontPage">
+                <Signup />
+            </div>
         );
     }
 }

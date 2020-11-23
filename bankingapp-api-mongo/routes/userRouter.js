@@ -4,6 +4,7 @@ import {
     getAll,
     testUser,
 } from "../controllers/userController.js";
+
 const userRouter = express.Router();
 
 userRouter.get("/all", getAll);
