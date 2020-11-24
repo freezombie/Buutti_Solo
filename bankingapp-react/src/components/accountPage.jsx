@@ -1,10 +1,25 @@
 import { withContext } from "./AppContext";
 import { useHistory } from "react-router-dom";
+import { useEffect, useState } from  "react";
+import axios from "axios";
 
 function AccountPage(props) {
+    const [accountBalance, setAccountBalance] = useState({});
     const history = useHistory();
-    console.log(props.user);
-    if(!props.user.hasOwnProperty("name")){
+
+    useEffect(() => {
+        /*return axios({
+            method: "get",
+            url: `${URL}/api/accounts`,
+            headers: { "Content-Type": "application/json"},
+            data: {
+                id: userInfo.id,
+                password: userInfo.password
+            }
+        });*/
+    }, []);
+
+    if(!props.token){
         history.push("/");
     }
 return (

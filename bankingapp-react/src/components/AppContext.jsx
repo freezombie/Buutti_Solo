@@ -9,8 +9,8 @@ export class AppContextProvider extends Component {
     constructor() {
         super()
         this.state = {
-            user: {},
-            token: ""
+            user: JSON.parse(localStorage.getItem("user")) || {},
+            token: localStorage.getItem("token") || ""
         }
     }
     // userinfoon tulee ne infot mitä signup tarvii.
@@ -26,6 +26,8 @@ export class AppContextProvider extends Component {
         })
             .then(response => {
                 const { user, token } = response.data
+                localStorage.setItem("token", token);
+                localStorage.setItem("user", JSON.stringify(user));
                 this.setState({
                     user,
                     token
@@ -48,6 +50,8 @@ export class AppContextProvider extends Component {
         })
             .then(response => {
                 const { user, token } = response.data
+                localStorage.setItem("token", token)
+                localStorage.setItem("user", JSON.stringify(user));
                 this.setState({
                     user,
                     token
@@ -59,12 +63,22 @@ export class AppContextProvider extends Component {
             })
     }
 
+    logout = () => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        this.setState({
+            user: {},
+            token: ""
+        })
+    }
+
     render() {
         return (
             <AppContext.Provider
                 value={{
                     signup: this.signup,
                     login: this.login,
+                    logout: this.logout,
                     ...this.state
                 }}
             >

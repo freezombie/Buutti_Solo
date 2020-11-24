@@ -1,7 +1,7 @@
 import "./frontpage.css";
 import { Button } from 'antd';
 import "antd/dist/antd.css";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Signup from "./signup.jsx";
 import Login from "./login.jsx";
 
@@ -21,6 +21,12 @@ function Frontpage(props) {
         setOnFrontpage(false);
         setOnSignupPage(true);
     }
+
+    useEffect(() => {
+        setOnFrontpage(true);
+        setOnSignupPage(false);
+        setOnLoginPage(false);
+    },[])
 
     if(onFrontpage)
     {
