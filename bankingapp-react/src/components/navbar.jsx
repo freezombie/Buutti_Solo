@@ -3,7 +3,6 @@ import React, { Link } from "react-router-dom";
 import { useHistory } from "react-router-dom";
 
 function Navbar(props) {
-    const history = useHistory();
 
     const goToFrontPage = () => {
         window.location = "/";

@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import accountRouter from "./routes/accountRouter.js";
 import authRouter from "./routes/authRouter.js";
 import userRouter from "./routes/userRouter.js";
+import cors from "cors";
 
 dotenv.config();
 const app = express();
@@ -14,6 +15,7 @@ const app = express();
 const requestLogger = (req, res, next) => {
     console.log(`METHOD: ${req.method}`);
     console.log(`PATH: ${req.path}`);
+    console.log("HEADERS: ", req.headers);
     console.log("BODY: ", req.body);
     console.log("QUERY: ", req.query);
     console.log("----");
@@ -31,6 +33,7 @@ const connectMongoose = async () => {
 
 connectMongoose();
 app.use(express.json());
+app.use(cors());
 app.use(requestLogger);
 app.use("/api", expressJwt({ secret: process.env.SECRET, algorithms: ["HS256"] }));
 app.use("/auth", authRouter);

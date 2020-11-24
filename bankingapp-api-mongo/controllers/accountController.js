@@ -30,11 +30,14 @@ export const newAccount = async (req, res, _id) => {
 export const getBalance = async (req, res) => {
     // reqissä näemmä on piilossa tuo _id niin ei tarvii hakea useria erikseen siellä
     // req.userissa kulkevalla normi idllä.
+    console.log("Trying to get balance");
+    console.log(req.user);
     AccountModel.findOne({ user: req.user._id }, (err, account) => {
-        if (err) {
-            res.status(500).send("Failed to find account");
+        if (!account) {
+            console.log("not found with ", req.user._id);
+            return res.status(500).send("Failed to find account");
         }
-        console.log(account);
+        console.log("found with ", req.user._id);
         return res.send({ account_balance: account.balance });
     });
 };

@@ -1,27 +1,40 @@
 import axios from "axios";
 import React, { Component } from "react";
 
+const accountAxios = axios.create();
 const AppContext = React.createContext();
-
 const URL = "http://localhost:5000";
+
+accountAxios.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    config.headers.Authorization = `Bearer ${token}`;
+    return config;
+})
 
 export class AppContextProvider extends Component {
     constructor() {
         super()
         this.state = {
             user: JSON.parse(localStorage.getItem("user")) || {},
-            token: localStorage.getItem("token") || ""
+            token: localStorage.getItem("token") || "",
+            balance: 0
         }
+    }
+
+    componentDidMount() {
+        this.getBalance();
     }
     // userinfoon tulee ne infot mitä signup tarvii.
     signup = (userInfo) => {
-        return axios({
+        console.log(userInfo);
+        return accountAxios({
             method: "post",
             url: `${URL}/auth/new`,
             headers: { "Content-Type": "application/json"},
             data: {
                 name: userInfo.name,
-                password: userInfo.password
+                password: userInfo.password,
+                deposit: userInfo.deposit
             }
         })
             .then(response => {
@@ -39,7 +52,7 @@ export class AppContextProvider extends Component {
     }
 
     login = (userInfo) => {
-        return axios({
+        return accountAxios({
             method: "post",
             url: `${URL}/auth/login`,
             headers: { "Content-Type": "application/json"},
@@ -72,6 +85,17 @@ export class AppContextProvider extends Component {
         })
     }
 
+    getBalance = () => {
+        return accountAxios({
+            method: "get",
+            url: `${URL}/api/accounts`,
+        }).then(response => {
+                this.setState({ balance: response.data });
+                console.log(response);
+                return response;
+            })
+    }
+
     render() {
         return (
             <AppContext.Provider
@@ -79,6 +103,7 @@ export class AppContextProvider extends Component {
                     signup: this.signup,
                     login: this.login,
                     logout: this.logout,
+                    getBalance: this.getBalance,
                     ...this.state
                 }}
             >
