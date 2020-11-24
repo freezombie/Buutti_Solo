@@ -20,7 +20,7 @@ export class AppContextProvider extends Component {
             url: `${URL}/auth/new`,
             headers: { "Content-Type": "application/json"},
             data: {
-                id: userInfo.id,
+                name: userInfo.name,
                 password: userInfo.password
             }
         })
