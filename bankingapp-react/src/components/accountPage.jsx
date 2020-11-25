@@ -9,8 +9,8 @@ function AccountPage(props) {
 
     useEffect(() => {
         const getBalance = async () => {
-            await props.getBalance();
-            setAccountBalance(props.balance.account_balance);
+        const newBalance = await props.getBalance()
+        setAccountBalance(newBalance);    
         }
         getBalance();
 

@@ -64,15 +64,15 @@ export const newUser = async (req, res) => {
             password: hashedPassword,
         };
         const userData = new UserModel(user);
-        await userData.save();
+        const returnedUser = await userData.save();
+        console.log(returnedUser);
         // If the user signs up, we might as well give them a token right now
         // So they don't then immediately have to log in as well
-        const token = jwt.sign(user, process.env.SECRET);
-        user.password = req.body.password; // ei haluta palauttaa enkryptoitua salasanaa
+        const token = jwt.sign(returnedUser.toObject(), process.env.SECRET);
         const account = await newAccount(req, res, userData._id);
         // varmaan account.user pitäs piilottaa. Salasana kanssa?
         return res.status(201).send({
-            success: true, user, account, token,
+            success: true, user: returnedUser.toObject(), account, token,
         });
     }
 };

@@ -92,7 +92,9 @@ export class AppContextProvider extends Component {
         }).then(response => {
                 this.setState({ balance: response.data });
                 console.log(response);
-                return response;
+                if(response.status === 200) {
+                    return response.data.account_balance;
+                }
             })
     }
 
