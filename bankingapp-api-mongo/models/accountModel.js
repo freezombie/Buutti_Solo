@@ -1,15 +1,17 @@
 import mongoose from "mongoose";
+import UserModel from "./userModel.js";
 
 const accountSchema = new mongoose.Schema({
-    id: String,
-    name: String,
-    password: String,
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: UserModel,
+        required: true,
+        unique: true,
+    },
     balance: Number,
     fund_requests: Array,
 });
-// tänne voi nimetä collectionin jos haluaa.
 
 const AccountModel = mongoose.model("account", accountSchema);
-// collectionistä tulee vissiin automaagisesti accounts.
 
 export default AccountModel;
